@@ -16,8 +16,6 @@ class clientSession : public boost::enable_shared_from_this<clientSession>
 public:
     clientSession(boost::asio::io_service &ioservice) : m_socket(ioservice)
     {
-        //cout<<"ip:"<<m_socket.remote_endpoint().address()
-            //<<" port:"<<m_socket.remote_endpoint().port()<<endl;
         memset(data_, '\0', sizeof(data_));
     }
     virtual ~clientSession(){}
@@ -27,7 +25,6 @@ public:
     }
     void start()
     {
-        cout<<m_socket<<endl;
         boost::asio::async_write(m_socket,
             boost::asio::buffer("link successed!"),
             boost::bind(&clientSession::handle_write,shared_from_this(),
@@ -36,6 +33,9 @@ public:
         m_socket.async_read_some(boost::asio::buffer(data_,max_len),
             boost::bind(&clientSession::handle_read,shared_from_this(),
             boost::asio::placeholders::error));
+
+        cout<<"ip:"<<m_socket.remote_endpoint().address()
+            <<" port:"<<m_socket.remote_endpoint().port()<<endl;
     }
 private:
     void handle_write(const boost::system::error_code &error)
