@@ -1,4 +1,5 @@
 #include <iostream>
+#include <ctime>
 
 #include <boost/asio.hpp>
 
@@ -13,8 +14,10 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/asio/ip/detail/endpoint.hpp>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 using namespace std;
-using namespace boost::asio;
+using namespace boost::asio;        //打开asio名词空间
 
 const int PORT = 2002;
 

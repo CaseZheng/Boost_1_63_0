@@ -51,25 +51,39 @@
 ![模拟Proactor模式](./Picture/asio_Proactor_3.jpg)
 
 # Boost.Asio 学习
-## 1 入门
-- Boost.Asio最核心的类----io_service。
-### 1.1 Boost.Asio是什么
+- asio库基于操作系统提供的异步机制，采用前摄器设计模式(Proactor)实现可移植的异步或者同步IO操作，并且并不要求使用多线程和锁定，有效避免多线程编程带来的诸多有害副作用(如条件竞争、死锁等)。
 - Boost.Asio是一个跨平台、主要用于网络和其他一些底层输入/输出编程的C++库。
 - Boost.Asio在网络通信、COM串行端口和文件上成功地抽象了输入输出的概念。
-### 1.2 依赖
 - Boost.Asio依赖如下库：
     1. Boost.System:为Boost库提供操作系统支持。
     2. Boost.Regex(可选的):以便重载Read_until()或者async_read_until()是使用boost::regex参数。
     3. Boost.DateTime(可选的):以便使用Boost.Asio中的计时器。
     4. OpenSSL(可选的):以便使用Boost.Asio提供的SSL支持。
-### 1.3 编译
-- Boost.Asio是一个只需要引入头文件就可以使用的库。在某个源文件中，添加#include "boost/asio/impl/src.hpp"(如果你在使用SSL，添加#include "boost/asio/ssl/impl/src.hpp"）在所有的源文件中，添加#define BOOST_ASIO_SEPARATE_COMPILATION
-- 注意Boost.Asio依赖于Boost.System，必要的时候还依赖于Boost.Regex。需要编译Boost,使用指令bjam –with-system –with-regex stage。
-### 1.4 重要宏
-- 如果设置了BOOST_ASIO_DISABLE_THREADS；不管你是否在编译Boost的过程中使用了线程支持，Boost.Asio中的线程支持都会失效。
-### 1.5 同步VS异步
-- 同步编程，所有操作都是顺序执行。
-- 异步编程是事件驱动的。
+- asio 位于名字空间boost::asio ,需要包含头文件如下:
+```
+#define BOOST_REGEX_NO_LIB
+#define BOOST_DATE_TIME_SOURCE
+#define BOOST_SYSTEM_NO_LIB
+#include <boost/asio.hpp>
+using namespace boost::asio;
+```
+## 1. 概述
+- asio库基于Proactor封装了操作系统的select、poll/epoll、kqueue、overlappedI/O等机制，实现异步IO模型。
+- asio的核心类是io_service, 相当于前摄器模式中的Proactor角色，asio的任何操作都需要io_service的参与。
+- 同步模式下，程序发起一个I/O操作，向io_service提交请求，io_service把操作转交给操作系统，同步等待，等I/O操作完成，操作系统通知io_service，然后io_service将结果发回程序，完成整个同步流程。
+- 异步模式下，程序除了发起I/O操作，还需要定义一个用于回调的完成处理函数。io_service同样把IO操作转交给操作系统，但不同步等待，而是立即返回，调用io_service的run()成员函数等待异步操作完成，当异步操作完成时io_service从操作系统获取执行结果，调用完成处理函数。
+- asio不直接使用操作系统提供的线程，而是定义了一个自己的线程概念：stand，保证多线程环境中代码可以正确执行，而无需使用互斥量。io_service::stand::wrap()函数可以包装一个函数在strand中执行。
+- asio专门用两个类mutable_buffer和const_buffer来封装缓存区，它们可以安全的应用到异步的读写当中,使用自由函数buffer()可以包装常用的C++容器类型(array,vector,string等),用read()、write()函数读取缓存区。
+- asio使用system库的error_code和system_error表示程序运行错误。基本所有函数有两种重载，一是有error_code的输出参数，调用后检查这个参数验证错误，二是没有error_code参数，发生错误则抛出system_error异常, 调用代码用try-catch块捕获错误。
 
+## 2. 定时器
+- 定时器功能的主要类是deadline_timer
+- 定时器deadline_timer有两种形式的构造函数，都要求有io_service对象，用于提交IO请求，另一个参数是posix_time的绝对时间点或者是自当前时间开始的时间长度。
+- 定时器对象创建，立即开始计时，可用成员函数wait()同步等待定时器终止，或使用async_wait()异步等待，当定时器终止时会调用handler函数。
+- 如果创建定时器不制定终止时间，定时器不会工作，可用成员函数expires_at()和expires_from_now()分别设定定时器终止的绝对时间和相对时间，然后调用wait()或async_wait()等待。expires_at()和expires_from_now()的无参重载形式可以获得定时器的终止时间。
+- 定时器cancel()函数。通知所有异步操作取消，转而等待定时器终止。
+
+## 3. 定时器用法
+### 同步定时器
 
 

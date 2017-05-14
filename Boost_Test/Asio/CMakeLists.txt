@@ -16,6 +16,8 @@ SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall")           # 指定编译器
                                                 # -g：只是编译器，在编译的时候，产生调试信息。
                                                 # -Wall：生成所有警告信息。一下是具体的选项，可以单独使用
 
+SET(PROJECT_BINARY_DIR ./build)
+
 #3.头文件目录
 INCLUDE_DIRECTORIES(.)
 
@@ -26,14 +28,17 @@ AUX_SOURCE_DIRECTORY(. DIR_SOURCE)
 #将要编译连接的所有文件 赋值给SOURCE_LIST变量
 SET(SOURCE_CLIENT_LIST public.h client.cpp)
 SET(SOURCE_SERVER_LIST public.h server.cpp)
+SET(SOURCE_TIMER_LIST public.h timer.cpp)
 
 #client最后生成的可执行文件名 赋值给BIN_NAME变量
 SET(BIN_CLIENT_NAME client)
 SET(BIN_SERVER_NAME server)
+SET(BIN_TIMER_NAME timer)
 
 #6.添加要编译的可执行文件 
 ADD_EXECUTABLE(${BIN_CLIENT_NAME} ${SOURCE_CLIENT_LIST})
 ADD_EXECUTABLE(${BIN_SERVER_NAME} ${SOURCE_SERVER_LIST})
+ADD_EXECUTABLE(${BIN_TIMER_NAME} ${SOURCE_TIMER_LIST})
 
 #需要链接的动态库
 SET(SO_LIST boost_system)
@@ -41,6 +46,4 @@ SET(SO_LIST boost_system)
 #7.添加可执行文件所需要的库
 TARGET_LINK_LIBRARIES(${BIN_CLIENT_NAME} ${SO_LIST})
 TARGET_LINK_LIBRARIES(${BIN_SERVER_NAME} ${SO_LIST})
-
-
-
+TARGET_LINK_LIBRARIES(${BIN_TIMER_NAME} ${SO_LIST})
