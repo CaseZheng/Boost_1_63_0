@@ -2,6 +2,7 @@
 #include <ctime>
 
 #include <boost/asio.hpp>
+#include <time.h>
 
 #include "boost/filesystem.hpp"
 #include "boost/shared_ptr.hpp"

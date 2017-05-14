@@ -6,7 +6,6 @@ using boost::asio::buffer;
 
 typedef boost::shared_ptr<ip::tcp::socket> socket_ptr;
 
-
 #if 1
 
 const int max_len = 1024;
@@ -25,14 +24,16 @@ public:
     }
     void start()
     {
+        //写入数据
         boost::asio::async_write(m_socket,
             boost::asio::buffer("link successed!"),
-            boost::bind(&clientSession::handle_write,shared_from_this(),
-            boost::asio::placeholders::error));
+            boost::bind(&clientSession::handle_write, shared_from_this(),
+                boost::asio::placeholders::error));
 
+        //读取数据
         m_socket.async_read_some(boost::asio::buffer(data_,max_len),
             boost::bind(&clientSession::handle_read,shared_from_this(),
-            boost::asio::placeholders::error));
+                boost::asio::placeholders::error));
 
         cout<<"ip:"<<m_socket.remote_endpoint().address()
             <<" port:"<<m_socket.remote_endpoint().port()<<endl;
@@ -44,19 +45,28 @@ private:
         {
             m_socket.close();
         }
+        else
+        {
+            cout<<"send data_ success error: "<<error
+                <<" "<<boost::system::system_error(error).what()<<endl;
+        }
     }
     void handle_read(const boost::system::error_code& error)
     {
-        if(!error)
+        if(error)
         {
+            cout<<"read data_ fail error: "<<error
+                <<" "<<boost::system::system_error(error).what()<<endl;
+            m_socket.close();
+        }
+        else
+        {
+            cout<<"read data_ success error: "<<error
+                <<" "<<boost::system::system_error(error).what()<<endl;
             std::cout <<data_<< std::endl;
             m_socket.async_read_some(boost::asio::buffer(data_, max_len), 
                     boost::bind(&clientSession::handle_read, shared_from_this(),
                         boost::asio::placeholders::error));
-        }
-        else
-        {
-            m_socket.close();
         }
     }
 private:
@@ -71,9 +81,11 @@ class serverApp
 public:
     serverApp(boost::asio::io_service& ioservice,tcp::endpoint& endpoint) : 
         m_ioservice(ioservice),
+        //创建接收器acc, 一个接受客户端连接，创建虚拟的socket,异步等待客户端连接的对象。
         acceptor_(ioservice,endpoint)
     {
         session_ptr new_session(new clientSession(ioservice));
+        //为sock绑定一个消息处理程序serverApp::handle_accept
         acceptor_.async_accept(new_session->socket(),
             boost::bind(&serverApp::handle_accept, this, boost::asio::placeholders::error, 
                 new_session));
@@ -100,71 +112,15 @@ private:
 
 int main(int argc, char *argv[])
 {
+    //创建io_service实例
     boost::asio::io_service myIoService;
+
+    //指定监听端口 ip
     tcp::endpoint endPoint(tcp::v4(), PORT);
     serverApp sa(myIoService, endPoint);
+    //运行异步service.run()循环。当接收到客户端连接时，serverApp::handle_accept被调用。
     myIoService.run();
     return 0;
-}
-
-#endif
-
-#if 0
-void start_accept(socket_ptr sock);
-void handle_accept(socket_ptr sock, const boost::system::error_code & err);
-
-//创建io_service实例
-io_service service;
-//指定监听端口 ip
-ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 2001);
-//创建接收器acc, 一个接受客户端连接，创建虚拟的socket,异步等待客户端连接的对象。
-ip::tcp::acceptor acc(service, ep);
-
-static socket_ptr accept_sock;
-
-int main(int argc, char *argv[])
-{
-    //基本的异步服务器
-    socket_ptr sock(new ip::tcp::socket(service));
-    accept_sock = sock;
-    //绑定sock的消息处理函数
-    start_accept(sock);
-    //运行异步service.run()循环。当接收到客户端连接时，handle_accept被调用。
-    service.run();
-    return 0;
-}
-
-void start_accept(socket_ptr sock)
-{
-    cout<<"bind_sock: "<<sock<<endl;
-    //为sock绑定一个消息处理程序handle_accept
-    acc.async_accept(*sock, boost::bind(handle_accept, sock, _1));
-}
-
-void handle_accept(socket_ptr sock, const boost::system::error_code & err)
-{
-    if(err)
-    {
-        cout<<"handle_accept err:"<<err<<endl;
-        return;
-    }
-    cout<<"agr_sock: "<<sock<<endl;
-    if(sock == accept_sock)
-    {
-        socket_ptr new_sock(new ip::tcp::socket(service));
-        cout<<"new_sock: "<<new_sock<<endl;
-        start_accept(new_sock);
-        sock->write_some(boost::asio::buffer("client", 6));
-        sock->close();
-    }
-    else
-    {
-        char buff[1024];
-        size_t len = sock->read_some(buffer(buff));
-        std::string msg(buff, len);
-        cout<<"msg:"<<msg<<endl;
-        sock->close();
-    }
 }
 #endif
 
