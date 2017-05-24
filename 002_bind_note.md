@@ -132,3 +132,58 @@ int main(int argc, char* argv[])
 ```
 ## 4. 绑定成员变量
 - bind可以绑定public成员变量
+```
+int main(int argc, char *argv[])
+{
+    vector<Test> v;
+    v.push_back(Test(1));
+    v.push_back(Test(2));
+    v.push_back(Test(3));
+    v.push_back(Test(4));
+    for_each(v.begin(), v.end(), boost::bind(&Test::print, _1));
+    cout<<endl;
+
+    vector<int> v2(10);
+    transform(v.begin(), v.end(), v2.begin(), bind(&Test::x, _1));  //bind取出Test对象的成员变量x，transform算法调用bind表达式操作容器v，逐个吧变量填入到v2中
+    for_each(v2.begin(), v2.end(), boost::bind(print_test_int, _1));
+    cout<<endl;
+
+    typedef pair<int, string> pair_t;
+    pair_t p(123, "bind");
+    cout<<boost::bind(&pair_t::first, p)()<<endl;
+    cout<<boost::bind(&pair_t::second, p)()<<endl;
+
+    return 0;
+}
+```
+## 5. 绑定函数对象
+- bind可以绑定函数对象，包括标准库中的所有预定义的函数对象
+- 如果函数对象有内部定义result_type,bind可以自动推导出返回值类型，如果函数对象未定义result_type,则需要用模版参数指明返回值类型。
+- 标准库和boost库大部分函数对象都具有result_type定义。
+```
+struct f
+{
+    int operator()(int x, int y)
+    {
+        return x + y;
+    }
+};
+
+struct g
+{
+    typedef int result_type;
+    int operator()(int x, int y)
+    {
+        return x + y;
+    }
+};
+//绑定函数对象
+int main(int argc, char *argv[])
+{
+    cout<<boost::bind(greater<int>(), _1, 10)(13)<<endl;     //标准库 具有result_type类型定义
+    cout<<boost::bind<int>(f(), _1, _2)(10, 15)<<endl;      //自定义函数对象，可以通过模版制定返回值类型
+    cout<<boost::bind(g(), _1, _2)(15, 15)<<endl;           //自定义函数对象，定义result_type
+    return 0;
+}
+```
+## 6. 使用ref库

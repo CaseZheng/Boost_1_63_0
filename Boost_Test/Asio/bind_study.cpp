@@ -33,8 +33,35 @@ void print_test_int(int &t)
     cout<<t<<" ";
 }
 
+struct f
+{
+    int operator()(int x, int y)
+    {
+        return x + y;
+    }
+};
+
+struct g
+{
+    typedef int result_type;
+    int operator()(int x, int y)
+    {
+        return x + y;
+    }
+};
 
 #if 1
+//绑定函数对象
+int main(int argc, char *argv[])
+{
+    cout<<boost::bind(greater<int>(), _1, 10)(13)<<endl;    //标准库 具有result_type类型定义
+    cout<<boost::bind<int>(f(), _1, _2)(10, 15)<<endl;      //自定义函数对象，可以通过模版制定返回值类型
+    cout<<boost::bind(g(), _1, _2)(15, 15)<<endl;           //自定义函数对象，定义result_type
+    return 0;
+}
+#endif 
+
+#if 0
 //绑定成员变量
 int main(int argc, char *argv[])
 {
