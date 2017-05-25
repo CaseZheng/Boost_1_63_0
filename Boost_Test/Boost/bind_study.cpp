@@ -19,6 +19,11 @@ public:
     }
 };
 
+int f3(int a, int b, int c)
+{
+    return a+b+c;
+}
+
 void print_test(Test &t)
 {
     t.print();
@@ -51,6 +56,34 @@ struct g
 };
 
 #if 1
+//使用ref库
+int main(int argc, char *argv[])
+{
+    int x = 10;
+    int y = 20;
+    cout<<boost::bind(greater<int>(), _1, cref(x))(13)<<endl;
+
+    g gf;
+    cout<<boost::bind(ref(gf), _1, 20)(10)<<endl;
+
+    BOOST_AUTO(r, ref(x));
+
+    {
+        int *y = new int(5);
+        r = ref(*y);
+        cout<<r<<endl;
+        cout<<bind(f3, r, 1, 1)()<<endl;
+        delete y;
+    }
+
+    int *w = new int(8);
+    cout<<bind(f3, r, 1, 1)()<<endl;
+
+    return 0;
+}
+#endif 
+
+#if 0
 //绑定函数对象
 int main(int argc, char *argv[])
 {
@@ -135,11 +168,6 @@ int f2(int a, int b)
     cout<<"a:"<<a<<endl;
     cout<<"b:"<<b<<endl;
     return a+b;
-}
-
-int f3(int a, int b, int c)
-{
-    return a+b+c;
 }
 
 struct f4: public std::binary_function<int,int,int>

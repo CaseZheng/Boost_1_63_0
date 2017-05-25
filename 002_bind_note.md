@@ -187,3 +187,38 @@ int main(int argc, char *argv[])
 }
 ```
 ## 6. 使用ref库
+- bind采用拷贝的方式存储绑定对象和参数，如果函数对象或值参数很大、拷贝代价很高，或者无法拷贝，bind的使用会受到限制。因此bind可以搭配ref库，ref库包装对象的引用，让bind存储对象引用的拷贝，降低拷贝的代价。
+- 使用ref传对象引用时，必须保证bind被调用时引用时有效的。
+```
+//使用ref库
+int main(int argc, char *argv[])
+{
+    int x = 10;
+    int y = 20;
+    cout<<boost::bind(greater<int>(), _1, cref(x))(13)<<endl;
+
+    g gf;
+    cout<<boost::bind(ref(gf), _1, 20)(10)<<endl;
+
+    BOOST_AUTO(r, ref(x));
+
+    {
+        int *y = new int(5);
+        r = ref(*y);
+        cout<<r<<endl;
+        cout<<bind(f3, r, 1, 1)()<<endl;
+        delete y;
+    }
+
+    int *w = new int(8);
+    cout<<bind(f3, r, 1, 1)()<<endl;
+
+    return 0;
+}
+```
+## 7. 高级议题
+### 为占位符更名
+- 最简单的方法：为原占位符使用引用创建别名，可以使用BOOST_AUTO，无需关心占位符的真实类型，将推导的工作交给编译器。
+### 存储bind表达式
+- bind表达式生成的函数对象类型声明非常复杂，可以使用typedef库BOOST_AUTO宏辅助，也可以用function库。
+### 
