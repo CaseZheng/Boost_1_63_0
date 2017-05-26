@@ -8,6 +8,39 @@ static void handle(const boost::system::error_code &e)     //异步定时器回�
     cout<<e<<endl;
 }
 
+void print_t()
+{
+    cout<<"print"<<endl;
+}
+
+class timer_test
+{
+private:
+    int count;
+    int count_max;
+    function<void()> f;
+    deadline_timer t;
+public:
+    template<typename F>
+    timer_test(io_service &ios, int x, F func):
+        f(func), count_max(x), count(0),t(ios, posix_time::millisec(500))
+    {
+        t.async_wait(bind(&timer_test::call_func, this, boost::asio::placeholders::error));
+    }
+
+    void call_func(const system::error_code &)
+    {
+        if(count >= count_max)
+        {
+            return;
+        }
+        ++count;
+        f();
+        t.expires_at(t.expires_at() + posix_time::millisec(500));
+        t.async_wait(bind(&timer_test::call_func, this, boost::asio::placeholders::error()));
+    }
+};
+
 int main(int argc, char *argv[])
 {
     io_service service;             //所有asio程序必须有一个io_service对象
@@ -19,6 +52,8 @@ int main(int argc, char *argv[])
     cout<<t.expires_at()<<endl;             //查看定时器停止时的绝对时间
 
     t.async_wait(handle);                   //调用wait()异步等待，传入回调函数。
+
+    timer_test tt(service, 6, print_t);
 
     service.run();                  //启动前摄器的事件处理循环，阻塞等待所有的操作完成并分派事件。
 

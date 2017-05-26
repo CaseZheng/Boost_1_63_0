@@ -56,6 +56,27 @@ struct g
 };
 
 #if 1
+//高级议题
+int main(int argc, char *argv[])
+{
+    const boost::arg<1> &arg1 = _1;
+    const boost::arg<2> &arg2 = _2;
+    cout<<bind(f3, arg1, 3, arg2)(1, 3)<<endl;
+
+    const BOOST_AUTO(&_x, _1);
+    const BOOST_AUTO(&_y, _2);
+    cout<<bind(f3, _x, 3, _y)(1, 3)<<endl;
+
+    BOOST_AUTO(bf3, bind(f3, arg1, arg2, 5));
+    cout<<bf3(5, 5)<<endl;
+
+    cout<<bind(f3, bf3(3, 3), 1, 2)()<<endl;
+
+    return 0;
+}
+#endif 
+
+#if 0
 //使用ref库
 int main(int argc, char *argv[])
 {

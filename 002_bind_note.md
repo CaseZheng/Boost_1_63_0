@@ -221,4 +221,10 @@ int main(int argc, char *argv[])
 - 最简单的方法：为原占位符使用引用创建别名，可以使用BOOST_AUTO，无需关心占位符的真实类型，将推导的工作交给编译器。
 ### 存储bind表达式
 - bind表达式生成的函数对象类型声明非常复杂，可以使用typedef库BOOST_AUTO宏辅助，也可以用function库。
-### 
+### 嵌套绑定
+- bind可以嵌套，一个bind表达式生成的函数对象可以被另一个bind再绑定，实现类似f(g(x))的形式。bind嵌套要特别小心，不容易写正确和理解。
+### 操作符重载
+- bind重载了比较操作符和逻辑非操作符,可以将多个bind绑定组合起来，形成复杂的逻辑表达式，配合标准库实现语法简单但语义复杂的操作。
+### 绑定非标准函数
+- 有的非标准函数bind无法推导出返回值，必须显式地指定bind的返回值类型。
+- bind不支持使用了不同调用方式(如__stdcall、__fastcall、extern "C")的函数，bind将它们看做函数对象，需要显式指定bind的返回值类型。或者在<boost/bind.hpp>之前加上BOOST_BIND_ENABLE_STDCALL、BOOST_BIND_ENABLE_FASTCALL、BOOST_BIND_ENABLE_PASCAL等宏，明确告诉bind支持这些调用。

@@ -136,5 +136,7 @@ int main(int argc, char *argv[])
 
 ```
 ### 异步绑定器使用bind
+- 由于async_wait()接受的回调函数类型是固定的，必须使用bind库来绑定参数以适配它的接口。
+
 
 
