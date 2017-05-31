@@ -1,7 +1,7 @@
 # boost库 bind学习 boost_1_63
 - bind是C++98标准库中函数适配器bind1st/bind2nd的泛化和增强，可以适配任意的可调用对象，包含函数指针、函数引用、成员函数指针和函数对象。bind最多可以绑定9个函数参数，而且对绑定对象的要求很低，可以在没有result_type内部类型定义的情况下完成对函数对象的绑定。
 - bind位于名词空间boost，使用bind组件需包含头文件<boost/bind.hpp>, 即:
-```
+``` cpp
 #include <boost/bind.hpp>
 using namespace boost;
 ```
@@ -15,7 +15,7 @@ using namespace boost;
 ## 2. 绑定普通函数
 - bind可以绑定普通函数，包括函数、函数指针。
 - 必须在绑定表达式中提供函数要求的所有参数，无论是真实参数还是占位符均可以。
-```
+``` cpp
 //绑定普通函数
 int f2(int a, int b)
 {
@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 - bind可以绑定类的成员函数。类的成员函数指针不能直接调用operator()，必须绑定一个对象或者函数，通过this指针调用成员函数。因此bind需要用一个占位符的位置让用户提供一个类的实例、引用或者指针，通过对象作为第一个参数来调用成员函数。所以使用成员函数最多只能绑定8个参数。
 - bind可以代替标准库中的mem_fun和mem_fun_ref帮顶起，用来配合标准算法操作容器中对象。
 - bind同样支持绑定虚拟成员函数，用法与非虚函数相同，虚函数的行为将由实际调用发生时的实例来决定。
-```
+``` cpp
 //绑定成员函数
 struct Test
 {
@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
 ```
 ## 4. 绑定成员变量
 - bind可以绑定public成员变量
-```
+``` cpp
 int main(int argc, char *argv[])
 {
     vector<Test> v;
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 - bind可以绑定函数对象，包括标准库中的所有预定义的函数对象
 - 如果函数对象有内部定义result_type,bind可以自动推导出返回值类型，如果函数对象未定义result_type,则需要用模版参数指明返回值类型。
 - 标准库和boost库大部分函数对象都具有result_type定义。
-```
+``` cpp
 struct f
 {
     int operator()(int x, int y)
@@ -180,16 +180,16 @@ struct g
 //绑定函数对象
 int main(int argc, char *argv[])
 {
-    cout<<boost::bind(greater<int>(), \_1, 10)(13)<<endl;     //标准库 具有result_type类型定义
-    cout<<boost::bind<int>(f(), \_1, _2)(10, 15)<<endl;      //自定义函数对象，可以通过模版制定返回值类型
-    cout<<boost::bind(g(), \_1, \_2)(15, 15)<<endl;           //自定义函数对象，定义result_type
+    cout<<boost::bind(greater<int>(), _1, 10)(13)<<endl;     //标准库 具有result_type类型定义
+    cout<<boost::bind<int>(f(), _1, _2)(10, 15)<<endl;      //自定义函数对象，可以通过模版制定返回值类型
+    cout<<boost::bind(g(), _1, _2)(15, 15)<<endl;           //自定义函数对象，定义result_type
     return 0;
 }
 ```
 ## 6. 使用ref库
 - bind采用拷贝的方式存储绑定对象和参数，如果函数对象或值参数很大、拷贝代价很高，或者无法拷贝，bind的使用会受到限制。因此bind可以搭配ref库，ref库包装对象的引用，让bind存储对象引用的拷贝，降低拷贝的代价。
 - 使用ref传对象引用时，必须保证bind被调用时引用时有效的。
-```
+``` cpp
 //使用ref库
 int main(int argc, char *argv[])
 {
