@@ -137,6 +137,88 @@ int main(int argc, char *argv[])
 ```
 ### 异步绑定器使用bind
 - 由于async_wait()接受的回调函数类型是固定的，必须使用bind库来绑定参数以适配它的接口。
+```
+void print_t()
+{
+    cout<<"print"<<endl;
+}
+class timer_test
+{
+private:
+    int count;
+    int count_max;
+    function<void()> f;
+    deadline_timer t;
+public:
+    template<typename F>
+    timer_test(io_service &ios, int x, F func):
+        f(func), count_max(x), count(0),t(ios, posix_time::millisec(500))
+    {
+        t.async_wait(bind(&timer_test::call_func, this, boost::asio::placeholders::error));
+    }
 
+    void call_func(const system::error_code &)
+    {
+        if(count >= count_max)
+        {
+            return;
+        }
+        ++count;
+        f();
+        t.expires_at(t.expires_at() + posix_time::millisec(500));
+        t.async_wait(bind(&timer_test::call_func, this, boost::asio::placeholders::error));
+    }
+};
+int main(int argc, char *argv[])
+{
+    io_service service;             //所有asio程序必须有一个io_service对象
+    cout<<time(0)<<endl;
+    deadline_timer t(service,               //定时器，io_service作为构造函数的参数。
+            boost::posix_time::seconds(2)); //2s后定时器终止。
+    cout<<t.expires_at()<<endl;             //查看定时器停止时的绝对时间
+    t.async_wait(handle);                   //调用wait()异步等待，传入回调函数。
+    timer_test tt(service, 6, print_t);
+    service.run();                  //启动前摄器的事件处理循环，阻塞等待所有的操作完成并分派事件。
+    cout<<"not wait"<<endl;
+    return 0;
+}
+```
+## 4.网络通信简述
+- asio库支持TCP、UDP和TCMP通信协议。
+- boost::asio::ip名字空间提供网络通信方面的函数和类，封装原始的Berkeley Socket API。 
+- ip::tcp类是asio网络通信(TCP)部分主要的类，其中定义了用于TCP通信的typedef类型，用于协作完成网络通信。typedef包括端点类endpoint、套接字类socket、流类iostream、接受器acceptor、解析器resolver等。
+## 5. IP地址和端点
+- IP地址独立于TCP、UDP等通信协议，asio库使用类ip::address来表示IP地址，可以同时支持ipv4和ipv6两种地址。
+- address类最重要的方法是静态成员函数from_string()，是工厂函数，可以从字符串产生ip地址，地址的版本可以用is_v4()和is_v6()来检测。address成员函数to_string()把ip地址转化为字符串。
+- 端口在asio库中用ip::tcp::endpoint类来表示。主要用法是通过构造函数创建一个用于socket通信的端口对象，端口地址和端口号用address()和port()获得。
+```
+int main(int argc, char *argv[])
+{
+    ip::address addr;
+    addr = addr.from_string("127.0.0.1");
+    cout<<addr.is_v4()<<endl;
+    cout<<addr.is_v6()<<endl;
+    cout<<addr.to_string()<<endl;
 
+    addr = addr.from_string("ab::12:13:14");
+    cout<<addr.is_v4()<<endl;
+    cout<<addr.is_v6()<<endl;
+    cout<<addr.to_string()<<endl;
 
+    ip::tcp::endpoint epp(addr, 8000);
+    cout<<epp.address()<<endl;
+    cout<<epp.port()<<endl;
+    return 0;
+}
+```
+
+## 6. 同步socket处理
+- ip::tcp的内部类型socket、acceptor和resolver是asio库TCP通信中最核心的一组类，封装了socket的连接、断开、数据收发。
+- socket类是TCP通信的基本类。调用成员函数connect()可以连接到一个指定的通信端口，连接成功后用local_endpoint()和remote_endpoint()获得连接两端的端点信息，用read_some()和write_some()阻塞读写数据，当操作完成后使用close()函数关闭socket。如果不关闭socket，在socket析构时会自动调用close()关闭。
+- acceptor类用于服务器端，对用socket API的accept()函数功能，用于服务器端，在指点的端口号接受连接，必须配合socket类才能完成通信。
+- resolver类用于客户端解析网址获得可用的IP地址，解析到的IP地址可以使用socket对象连接。对应socket API的getaddrinfo()系列函数。
+- buffer()函数可以包装很多种类的容器成为asio组件可用的缓冲区类型，通常不能直接把数组、vector等容器作为asio的读写参数，必须要buffer()函数包装。
+## 7. 异步socket处理
+- 异步程序的处理流程与同步程序基本相同，需要将同步调用函数换成异步调用函数，并增加回调函数，在回调函数中再启动一个异步调用。
+## 8. 查询网络地址
+- resolver类通过域名获得可用的IP，实现与IP版本无关的网址解析。

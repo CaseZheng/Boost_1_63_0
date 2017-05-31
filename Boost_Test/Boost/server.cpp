@@ -6,7 +6,7 @@ using boost::asio::buffer;
 
 typedef boost::shared_ptr<ip::tcp::socket> socket_ptr;
 
-#if 1
+#if 0
 
 const int max_len = 1024;
 
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 }
 #endif
 
-#if 0
+#if 1
 //同步服务器
 int main(int argc, char * argv[])
 {
@@ -136,6 +136,7 @@ int main(int argc, char * argv[])
 
     //创建接收器acc, 一个接受客户端连接，创建虚拟的socket,异步等待客户端连接的对象。
     ip::tcp::acceptor acc(service, ep);
+    cout<<acc.local_endpoint().address()<<endl;
 
     for(;;)
     {

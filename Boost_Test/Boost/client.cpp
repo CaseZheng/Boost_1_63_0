@@ -1,6 +1,6 @@
 #include "public.h"
 
-
+#if 1
 //同步客户端
 int main(int argc, char *argv[])
 {
@@ -42,4 +42,27 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
+#endif
 
+#if 0
+int main(int argc, char *argv[])
+{
+    io_service service;
+
+    ip::address addr;
+    addr = addr.from_string("127.0.0.1");
+    cout<<addr.is_v4()<<endl;
+    cout<<addr.is_v6()<<endl;
+    cout<<addr.to_string()<<endl;
+
+    addr = addr.from_string("ab::12:13:14");
+    cout<<addr.is_v4()<<endl;
+    cout<<addr.is_v6()<<endl;
+    cout<<addr.to_string()<<endl;
+
+    ip::tcp::endpoint epp(addr, 8000);
+    cout<<epp.address()<<endl;
+    cout<<epp.port()<<endl;
+    return 0;
+}
+#endif

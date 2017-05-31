@@ -37,7 +37,7 @@ public:
         ++count;
         f();
         t.expires_at(t.expires_at() + posix_time::millisec(500));
-        t.async_wait(bind(&timer_test::call_func, this, boost::asio::placeholders::error()));
+        t.async_wait(bind(&timer_test::call_func, this, boost::asio::placeholders::error));
     }
 };
 
