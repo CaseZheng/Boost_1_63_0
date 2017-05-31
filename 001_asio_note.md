@@ -1,4 +1,4 @@
-# boost库 asio学习 boost_1_63
+# boost库 asio学习 boost\_1\_63
 
 # 高性能服务器程序框架 基础知识复习 （书籍 Linux高性能服务器编程）
 - 按照服务器一般原理，可将服务器解构为以下三个主要模块：
@@ -85,7 +85,7 @@ using namespace boost::asio;
 
 ## 3. 定时器用法
 ### 同步定时器
-```
+``` cpp
 //同步定时器
 int main(int argc, char *argv[])
 {
@@ -105,9 +105,9 @@ int main(int argc, char *argv[])
     return 0;
 }
 ```
-- io_service对象，是前摄器中最重要的proactor角色。
+- io\_service对象，是前摄器中最重要的proactor角色。
 ### 异步定时器
-```
+``` cpp
 //异步定时器
 static void handle(const boost::system::error_code &e)     //异步定时器回调函数 asio库要求回调函数只能有一个参数，而且必须是const asio::error_code &类型。
 {
@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
 ```
 ### 异步绑定器使用bind
 - 由于async_wait()接受的回调函数类型是固定的，必须使用bind库来绑定参数以适配它的接口。
-```
+``` cpp
 void print_t()
 {
     cout<<"print"<<endl;
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
 - IP地址独立于TCP、UDP等通信协议，asio库使用类ip::address来表示IP地址，可以同时支持ipv4和ipv6两种地址。
 - address类最重要的方法是静态成员函数from_string()，是工厂函数，可以从字符串产生ip地址，地址的版本可以用is_v4()和is_v6()来检测。address成员函数to_string()把ip地址转化为字符串。
 - 端口在asio库中用ip::tcp::endpoint类来表示。主要用法是通过构造函数创建一个用于socket通信的端口对象，端口地址和端口号用address()和port()获得。
-```
+``` cpp
 int main(int argc, char *argv[])
 {
     ip::address addr;
@@ -222,3 +222,32 @@ int main(int argc, char *argv[])
 - 异步程序的处理流程与同步程序基本相同，需要将同步调用函数换成异步调用函数，并增加回调函数，在回调函数中再启动一个异步调用。
 ## 8. 查询网络地址
 - resolver类通过域名获得可用的IP，实现与IP版本无关的网址解析。
+- resolver使用内部类query和iterator共同完成查询IP地址的工作：首先使用网址和服务名创建queruy对象，然后由resolve()函数生成iterator对象，它代表了查询到的ip端点，使用socket对象尝试连接，知道找到一个可用的为止。
+- resolver不仅能够解析域名，也支持使用IP和服务名。
+``` cpp
+int main(int argc, char *argv[])
+{
+    io_service service;
+    ip::tcp::resolver rlv(service);
+    ip::tcp::tcp::endpoint endpoint;
+    ip::tcp::resolver::query qry("www.google.com", "http");
+    ip::tcp::resolver::iterator iter = rlv.resolve(qry);
+    ip::tcp::resolver::iterator end;
+    system::error_code ec = error::host_not_found;
+    for(;ec && iter!=end; ++iter)
+    {
+        endpoint = *iter;
+        cout<<endpoint.address().to_string()<<endl;
+    }
+
+    return 0;
+}
+```
+## 7.高级议题
+### 超时处理
+- 使用定时器，在网络通信中实现超时处理，在异步调用后声明一个deadline_timer对象，然后设定等待时间和回调函数。
+### 流操作
+- 对于有连接的TCP协议，asio库专门提供了一个ip::tcp::iostream类贱货socket通信，ip::tcp::iostream是std::basic_iostream的子类，可以像标准流一样操作，内部集成了resolver的域名解析功能和acceptor的接受连接功能。
+### UDP协议通信
+- asio的udp和tcp处理流程相似，由于udp协议无连接，故不需要建立连接，使用send_to()和receive_from()直接通过端点发送数据。
+### 串口通信

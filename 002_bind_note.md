@@ -144,8 +144,8 @@ int main(int argc, char *argv[])
     cout<<endl;
 
     vector<int> v2(10);
-    transform(v.begin(), v.end(), v2.begin(), bind(&Test::x, _1));  //bind取出Test对象的成员变量x，transform算法调用bind表达式操作容器v，逐个吧变量填入到v2中
-    for_each(v2.begin(), v2.end(), boost::bind(print_test_int, _1));
+    transform(v.begin(), v.end(), v2.begin(), bind(&Test::x, \_1));  //bind取出Test对象的成员变量x，transform算法调用bind表达式操作容器v，逐个吧变量填入到v2中
+    for_each(v2.begin(), v2.end(), boost::bind(print_test_int, \_1));
     cout<<endl;
 
     typedef pair<int, string> pair_t;
@@ -180,9 +180,9 @@ struct g
 //绑定函数对象
 int main(int argc, char *argv[])
 {
-    cout<<boost::bind(greater<int>(), _1, 10)(13)<<endl;     //标准库 具有result_type类型定义
-    cout<<boost::bind<int>(f(), _1, _2)(10, 15)<<endl;      //自定义函数对象，可以通过模版制定返回值类型
-    cout<<boost::bind(g(), _1, _2)(15, 15)<<endl;           //自定义函数对象，定义result_type
+    cout<<boost::bind(greater<int>(), \_1, 10)(13)<<endl;     //标准库 具有result_type类型定义
+    cout<<boost::bind<int>(f(), \_1, _2)(10, 15)<<endl;      //自定义函数对象，可以通过模版制定返回值类型
+    cout<<boost::bind(g(), \_1, \_2)(15, 15)<<endl;           //自定义函数对象，定义result_type
     return 0;
 }
 ```

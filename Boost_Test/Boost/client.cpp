@@ -1,6 +1,6 @@
 #include "public.h"
 
-#if 1
+#if 0
 //同步客户端
 int main(int argc, char *argv[])
 {
@@ -63,6 +63,28 @@ int main(int argc, char *argv[])
     ip::tcp::endpoint epp(addr, 8000);
     cout<<epp.address()<<endl;
     cout<<epp.port()<<endl;
+    return 0;
+}
+#endif
+
+
+
+#if 1
+int main(int argc, char *argv[])
+{
+    io_service service;
+    ip::tcp::resolver rlv(service);
+    ip::tcp::tcp::endpoint endpoint;
+    ip::tcp::resolver::query qry("www.google.com", "http");
+    ip::tcp::resolver::iterator iter = rlv.resolve(qry);
+    ip::tcp::resolver::iterator end;
+    system::error_code ec = error::host_not_found;
+    for(;ec && iter!=end; ++iter)
+    {
+        endpoint = *iter;
+        cout<<endpoint.address().to_string()<<endl;
+    }
+
     return 0;
 }
 #endif
