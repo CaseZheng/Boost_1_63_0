@@ -8,7 +8,7 @@ DEFALLOC_H	.\defalloc.h	27;"	d
 NOMINMAX	.\stl_config.h	383;"	d
 STL_SEQUENCE_CONCEPTS_H	.\sequence_concepts.h	15;"	d
 _ALIGN	.\stl_alloc.h	/^    enum {_ALIGN = 8};$/;"	e	enum:__default_alloc_template::__anon12
-_ALIGN	.\stl_alloc.h	/^  enum {_ALIGN = 8};$/;"	e	enum:__anon9
+_ALIGN	.\stl_alloc.h	/^  enum {_ALIGN = 8};        \/\/ 小块内存的上调边界$/;"	e	enum:__anon9
 _Alloc	.\stl_alloc.h	/^  typedef alloc _Alloc;          \/\/ The underlying allocator.$/;"	t	class:allocator	access:private
 _Alloc_type	.\stl_bvector.h	/^          _Alloc_type;$/;"	t	class:_Bvector_alloc_base	access:protected
 _Alloc_type	.\stl_bvector.h	/^  typedef simple_alloc<unsigned int, _Alloc> _Alloc_type;$/;"	t	class:_Bvector_base	access:protected
@@ -515,7 +515,7 @@ _Lock	.\stl_alloc.h	/^    class _Lock {$/;"	c	class:__default_alloc_template	acc
 _Lt_traits	.\stl_ctraits_fns.h	/^struct _Lt_traits$/;"	s	inherits:binary_function
 _Lt_traits::operator ()	.\stl_ctraits_fns.h	/^  bool operator()(const typename _Traits::char_type& __x,$/;"	f	struct:_Lt_traits	access:public	signature:(const typename _Traits::char_type& __x, const typename _Traits::char_type& __y) const
 _MAX_BYTES	.\stl_alloc.h	/^    enum {_MAX_BYTES = 128};$/;"	e	enum:__default_alloc_template::__anon13
-_MAX_BYTES	.\stl_alloc.h	/^  enum {_MAX_BYTES = 128};$/;"	e	enum:__anon10
+_MAX_BYTES	.\stl_alloc.h	/^  enum {_MAX_BYTES = 128};  \/\/ 小块内存的上限$/;"	e	enum:__anon10
 _M_acquire_lock	.\stl_threads.h	/^  void _M_acquire_lock() {$/;"	f	struct:_STL_mutex_lock	access:public	signature:()
 _M_allocate	.\stl_vector.h	/^  _Tp* _M_allocate(size_t __n)$/;"	f	class:_Vector_alloc_base	access:protected	signature:(size_t __n)
 _M_allocate_and_copy	.\stl_vector.h	/^  iterator _M_allocate_and_copy(size_type __n, _ForwardIterator __first, $/;"	f	class:vector	access:protected	signature:(size_type __n, _ForwardIterator __first, _ForwardIterator __last)
@@ -687,7 +687,7 @@ _M_fn2	.\stl_function.h	/^  _Operation2 _M_fn2;$/;"	m	class:unary_compose	access
 _M_fn3	.\stl_function.h	/^  _Operation3 _M_fn3;$/;"	m	class:binary_compose	access:protected
 _M_free_c_string	.\ropeimpl.h	/^inline void _Rope_RopeRep<_CharT,_Alloc>::_M_free_c_string()$/;"	f	class:_Rope_RopeRep	signature:()
 _M_free_c_string	.\stl_rope.h	/^          void _M_free_c_string();$/;"	p	struct:_Rope_RopeRep	access:public	signature:()
-_M_free_list_link	.\stl_alloc.h	/^        union _Obj* _M_free_list_link;$/;"	m	union:__default_alloc_template::_Obj	typeref:union:__default_alloc_template::_Obj::_Obj	access:public
+_M_free_list_link	.\stl_alloc.h	/^        union _Obj* _M_free_list_link;      \/\/指向下一个可用的相同大小的内存块$/;"	m	union:__default_alloc_template::_Obj	typeref:union:__default_alloc_template::_Obj::_Obj	access:public
 _M_free_tree	.\ropeimpl.h	/^void _Rope_RopeRep<_CharT,_Alloc>::_M_free_tree()$/;"	f	class:_Rope_RopeRep	signature:()
 _M_free_tree	.\stl_rope.h	/^          void _M_free_tree();$/;"	p	struct:_Rope_RopeRep	access:public	signature:()
 _M_get_key	.\stl_hashtable.h	/^      _M_get_key(__ext),$/;"	p	class:hashtable	access:public	signature:(__ext)
@@ -963,7 +963,7 @@ _Mutable_trait	.\concept_checks.h	/^struct _Mutable_trait<const _Tp> {$/;"	s
 _Mutable_trait::_Type	.\concept_checks.h	/^  typedef _Tp _Type;$/;"	t	struct:_Mutable_trait	access:public
 _My_rope	.\stl_rope.h	/^    typedef rope<_CharT,_Alloc> _My_rope;$/;"	t	class:_Rope_char_ref_proxy	access:private
 _NFREELISTS	.\stl_alloc.h	/^    enum {_NFREELISTS = 16}; \/\/ _MAX_BYTES\/_ALIGN$/;"	e	enum:__default_alloc_template::__anon14
-_NFREELISTS	.\stl_alloc.h	/^  enum {_NFREELISTS = 16}; \/\/ _MAX_BYTES\/_ALIGN$/;"	e	enum:__anon11
+_NFREELISTS	.\stl_alloc.h	/^  enum {_NFREELISTS = 16};  \/\/ free_lists个数 _MAX_BYTES\/_ALIGN$/;"	e	enum:__anon11
 _Node	.\stl_hashtable.h	/^  typedef _Hashtable_node<_Val> _Node;$/;"	t	class:hashtable	access:private
 _Node	.\stl_hashtable.h	/^  typedef _Hashtable_node<_Val> _Node;$/;"	t	struct:_Hashtable_const_iterator	access:public
 _Node	.\stl_hashtable.h	/^  typedef _Hashtable_node<_Val> _Node;$/;"	t	struct:_Hashtable_iterator	access:public
@@ -1656,7 +1656,7 @@ _S_dump	.\ropeimpl.h	/^rope<_CharT,_Alloc>::_S_dump(_RopeRep* __r, int __indent)
 _S_dump	.\stl_rope.h	/^        static void _S_dump(_RopeRep* __r, int __indent = 0);$/;"	p	class:rope	access:private	signature:(_RopeRep* __r, int __indent = 0)
 _S_empty_c_str	.\ropeimpl.h	/^  _CharT rope<_CharT,_Alloc>::_S_empty_c_str[1];$/;"	m	class:rope
 _S_empty_c_str	.\stl_rope.h	/^        static _CharT _S_empty_c_str[1];$/;"	m	class:rope	access:protected
-_S_end_free	.\stl_alloc.h	/^  static char* _S_end_free;$/;"	m	class:__default_alloc_template	access:private
+_S_end_free	.\stl_alloc.h	/^  static char* _S_end_free;     \/\/内存池结束位置，只在_S_chunk_alloc()中改变$/;"	m	class:__default_alloc_template	access:private
 _S_end_free	.\stl_alloc.h	/^char* __default_alloc_template<__threads, __inst>::_S_end_free = 0;$/;"	m	class:__default_alloc_template
 _S_eos	.\stl_rope.h	/^inline _CharT _S_eos(_CharT*) { return _CharT(); }$/;"	f	signature:(_CharT*)
 _S_extra	.\stl_alloc.h	/^  enum {_S_extra = 8};  \/\/ Size of space used to store size.  Note$/;"	e	enum:debug_alloc::__anon8
@@ -1740,7 +1740,7 @@ _S_setcache	.\ropeimpl.h	/^void _Rope_iterator_base<_CharT,_Alloc>::_S_setcache$
 _S_setcache	.\stl_rope.h	/^    static void _S_setcache(_Rope_iterator_base& __x);$/;"	p	class:_Rope_iterator_base	access:protected	signature:(_Rope_iterator_base& __x)
 _S_setcache_for_incr	.\ropeimpl.h	/^void _Rope_iterator_base<_CharT,_Alloc>::_S_setcache_for_incr$/;"	f	class:_Rope_iterator_base	signature:(_Rope_iterator_base<_CharT,_Alloc>& __x)
 _S_setcache_for_incr	.\stl_rope.h	/^    static void _S_setcache_for_incr(_Rope_iterator_base& __x);$/;"	p	class:_Rope_iterator_base	access:protected	signature:(_Rope_iterator_base& __x)
-_S_start_free	.\stl_alloc.h	/^  static char* _S_start_free;$/;"	m	class:__default_alloc_template	access:private
+_S_start_free	.\stl_alloc.h	/^  static char* _S_start_free;   \/\/内存池起始位置，只在_S_chunk_alloc()中改变$/;"	m	class:__default_alloc_template	access:private
 _S_start_free	.\stl_alloc.h	/^char* __default_alloc_template<__threads, __inst>::_S_start_free = 0;$/;"	m	class:__default_alloc_template
 _S_substring	.\ropeimpl.h	/^rope<_CharT,_Alloc>::_S_substring(_RopeRep* __base, $/;"	f	class:rope	signature:(_RopeRep* __base, size_t __start, size_t __endp1)
 _S_substring	.\stl_rope.h	/^        static _RopeRep* _S_substring(_RopeRep* __base,$/;"	p	class:rope	access:protected	signature:(_RopeRep* __base, size_t __start, size_t __endp1)
@@ -2482,10 +2482,10 @@ __default_alloc_template::_MAX_BYTES	.\stl_alloc.h	/^    enum {_MAX_BYTES = 128}
 __default_alloc_template::_NFREELISTS	.\stl_alloc.h	/^    enum {_NFREELISTS = 16}; \/\/ _MAX_BYTES\/_ALIGN$/;"	e	enum:__default_alloc_template::__anon14
 __default_alloc_template::_Obj	.\stl_alloc.h	/^  union _Obj {$/;"	u	class:__default_alloc_template	access:private
 __default_alloc_template::_Obj::_M_client_data	.\stl_alloc.h	/^        char _M_client_data[1];    \/* The client sees this.        *\/$/;"	m	union:__default_alloc_template::_Obj	access:public
-__default_alloc_template::_Obj::_M_free_list_link	.\stl_alloc.h	/^        union _Obj* _M_free_list_link;$/;"	m	union:__default_alloc_template::_Obj	typeref:union:__default_alloc_template::_Obj::_Obj	access:public
+__default_alloc_template::_Obj::_M_free_list_link	.\stl_alloc.h	/^        union _Obj* _M_free_list_link;      \/\/指向下一个可用的相同大小的内存块$/;"	m	union:__default_alloc_template::_Obj	typeref:union:__default_alloc_template::_Obj::_Obj	access:public
 __default_alloc_template::_S_chunk_alloc	.\stl_alloc.h	/^  static char* _S_chunk_alloc(size_t __size, int& __nobjs);$/;"	p	class:__default_alloc_template	access:private	signature:(size_t __size, int& __nobjs)
 __default_alloc_template::_S_chunk_alloc	.\stl_alloc.h	/^__default_alloc_template<__threads, __inst>::_S_chunk_alloc(size_t __size, $/;"	f	class:__default_alloc_template	signature:(size_t __size, int& __nobjs)
-__default_alloc_template::_S_end_free	.\stl_alloc.h	/^  static char* _S_end_free;$/;"	m	class:__default_alloc_template	access:private
+__default_alloc_template::_S_end_free	.\stl_alloc.h	/^  static char* _S_end_free;     \/\/内存池结束位置，只在_S_chunk_alloc()中改变$/;"	m	class:__default_alloc_template	access:private
 __default_alloc_template::_S_end_free	.\stl_alloc.h	/^char* __default_alloc_template<__threads, __inst>::_S_end_free = 0;$/;"	m	class:__default_alloc_template
 __default_alloc_template::_S_free_list	.\stl_alloc.h	/^    static _Obj* __STL_VOLATILE _S_free_list[]; $/;"	m	class:__default_alloc_template	access:private
 __default_alloc_template::_S_free_list	.\stl_alloc.h	/^    static _Obj* __STL_VOLATILE _S_free_list[_NFREELISTS]; $/;"	m	class:__default_alloc_template	access:private
@@ -2497,7 +2497,7 @@ __default_alloc_template::_S_node_allocator_lock	.\stl_alloc.h	/^    static _STL
 __default_alloc_template::_S_refill	.\stl_alloc.h	/^  static void* _S_refill(size_t __n);$/;"	p	class:__default_alloc_template	access:private	signature:(size_t __n)
 __default_alloc_template::_S_refill	.\stl_alloc.h	/^__default_alloc_template<__threads, __inst>::_S_refill(size_t __n)$/;"	f	class:__default_alloc_template	signature:(size_t __n)
 __default_alloc_template::_S_round_up	.\stl_alloc.h	/^  _S_round_up(size_t __bytes) $/;"	f	class:__default_alloc_template	access:private	signature:(size_t __bytes)
-__default_alloc_template::_S_start_free	.\stl_alloc.h	/^  static char* _S_start_free;$/;"	m	class:__default_alloc_template	access:private
+__default_alloc_template::_S_start_free	.\stl_alloc.h	/^  static char* _S_start_free;   \/\/内存池起始位置，只在_S_chunk_alloc()中改变$/;"	m	class:__default_alloc_template	access:private
 __default_alloc_template::_S_start_free	.\stl_alloc.h	/^char* __default_alloc_template<__threads, __inst>::_S_start_free = 0;$/;"	m	class:__default_alloc_template
 __default_alloc_template::allocate	.\stl_alloc.h	/^  static void* allocate(size_t __n)$/;"	f	class:__default_alloc_template	access:public	signature:(size_t __n)
 __default_alloc_template::deallocate	.\stl_alloc.h	/^  static void deallocate(void* __p, size_t __n)$/;"	f	class:__default_alloc_template	access:public	signature:(void* __p, size_t __n)
