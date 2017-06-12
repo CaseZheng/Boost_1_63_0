@@ -41,13 +41,13 @@ __STL_BEGIN_NAMESPACE
 #endif
 
 struct _List_node_base {
-  _List_node_base* _M_next;
-  _List_node_base* _M_prev;
+  _List_node_base* _M_next;     //指向前一个元素
+  _List_node_base* _M_prev;     //指向后一个元素
 };
 
 template <class _Tp>
 struct _List_node : public _List_node_base {
-  _Tp _M_data;
+  _Tp _M_data;                  //数据
 };
 
 struct _List_iterator_base {
@@ -55,7 +55,7 @@ struct _List_iterator_base {
   typedef ptrdiff_t                  difference_type;
   typedef bidirectional_iterator_tag iterator_category;
 
-  _List_node_base* _M_node;
+  _List_node_base* _M_node;         //迭代器内部的一个指针，指向list的节点
 
   _List_iterator_base(_List_node_base* __x) : _M_node(__x) {}
   _List_iterator_base() {}
@@ -86,12 +86,15 @@ struct _List_iterator : public _List_iterator_base {
   _List_iterator() {}
   _List_iterator(const iterator& __x) : _List_iterator_base(__x._M_node) {}
 
+  //迭代器取值，取的是节点的数据值
   reference operator*() const { return ((_Node*) _M_node)->_M_data; }
 
 #ifndef __SGI_STL_NO_ARROW_OPERATOR
+  //迭代器成员存取运算符的标准做法
   pointer operator->() const { return &(operator*()); }
 #endif /* __SGI_STL_NO_ARROW_OPERATOR */
 
+  //迭代器加1，前进一个节点
   _Self& operator++() { 
     this->_M_incr();
     return *this;
@@ -101,6 +104,7 @@ struct _List_iterator : public _List_iterator_base {
     this->_M_incr();
     return __tmp;
   }
+  //迭代器减1，后退一个节点
   _Self& operator--() { 
     this->_M_decr();
     return *this;
@@ -234,27 +238,29 @@ public:
   void clear();
 
 protected:
-  typedef simple_alloc<_List_node<_Tp>, _Alloc> _Alloc_type;
-  _List_node<_Tp>* _M_get_node() { return _Alloc_type::allocate(1); }
-  void _M_put_node(_List_node<_Tp>* __p) { _Alloc_type::deallocate(__p, 1); } 
+  typedef simple_alloc<_List_node<_Tp>, _Alloc> _Alloc_type;        //专属空间配置器，每次配置一个节点大小
+  _List_node<_Tp>* _M_get_node() { return _Alloc_type::allocate(1); }   //配置一个节点并传回
+  void _M_put_node(_List_node<_Tp>* __p) { _Alloc_type::deallocate(__p, 1); }   //释放一个节点
 
 protected:
-  _List_node<_Tp>* _M_node;
+  _List_node<_Tp>* _M_node;         //只需要一个指针，便可表示整个环状双向链表，指向特别置为尾端的空白节点，list符合STL“前闭后开”区间的要求
 };
 
 #endif /* __STL_USE_STD_ALLOCATORS */
 
+//清除所有节点
 template <class _Tp, class _Alloc>
 void 
 _List_base<_Tp,_Alloc>::clear() 
 {
   _List_node<_Tp>* __cur = (_List_node<_Tp>*) _M_node->_M_next;
-  while (__cur != _M_node) {
+  while (__cur != _M_node) {        //遍历每个节点
     _List_node<_Tp>* __tmp = __cur;
     __cur = (_List_node<_Tp>*) __cur->_M_next;
-    _Destroy(&__tmp->_M_data);
-    _M_put_node(__tmp);
+    _Destroy(&__tmp->_M_data);      //销毁存储的数据
+    _M_put_node(__tmp);             //销毁节点本身
   }
+  //恢复node节点原始状态
   _M_node->_M_next = _M_node;
   _M_node->_M_prev = _M_node;
 }
@@ -306,6 +312,7 @@ protected:
 #endif /* __STL_HAS_NAMESPACES */
 
 protected:
+  //产生(配置并构造)一个节点，带有元素值
   _Node* _M_create_node(const _Tp& __x)
   {
     _Node* __p = _M_get_node();
@@ -316,6 +323,7 @@ protected:
     return __p;
   }
 
+  //产生(配置并构造)一个节点
   _Node* _M_create_node()
   {
     _Node* __p = _M_get_node();
@@ -327,6 +335,7 @@ protected:
   }
 
 public:
+  //默认构造函数 产生一个空的list
   explicit list(const allocator_type& __a = allocator_type()) : _Base(__a) {}
 
   iterator begin()             { return (_Node*)(_M_node->_M_next); }
@@ -353,15 +362,19 @@ public:
   }
   size_type max_size() const { return size_type(-1); }
 
+  //取头结点的内容(元素值)
   reference front() { return *begin(); }
   const_reference front() const { return *begin(); }
+  //取尾节点的内容(元素值)
   reference back() { return *(--end()); }
   const_reference back() const { return *(--end()); }
 
   void swap(list<_Tp, _Alloc>& __x) { __STD::swap(_M_node, __x._M_node); }
 
+  //在迭代器position所指位置插入一个节点，内容为x
   iterator insert(iterator __position, const _Tp& __x) {
-    _Node* __tmp = _M_create_node(__x);
+    _Node* __tmp = _M_create_node(__x);     //产生节点(内容设为x)
+    //调整双向链表，使__tmp插入进去
     __tmp->_M_next = __position._M_node;
     __tmp->_M_prev = __position._M_node->_M_prev;
     __position._M_node->_M_prev->_M_next = __tmp;
@@ -398,19 +411,29 @@ public:
     { _M_fill_insert(__pos, __n, __x); }
   void _M_fill_insert(iterator __pos, size_type __n, const _Tp& __x); 
 
+  //push_back()和push_front()内部都是调用的insert()
   void push_front(const _Tp& __x) { insert(begin(), __x); }
   void push_front() {insert(begin());}
   void push_back(const _Tp& __x) { insert(end(), __x); }
   void push_back() {insert(end());}
 
+  //移除迭代器position所指节点
   iterator erase(iterator __position) {
+    //找到后一个节点
     _List_node_base* __next_node = __position._M_node->_M_next;
+    //找到前一个节点
     _List_node_base* __prev_node = __position._M_node->_M_prev;
+    //记录当前节点
     _Node* __n = (_Node*) __position._M_node;
+    //前节点next域指向后节点
     __prev_node->_M_next = __next_node;
+    //后节点prev域指向前节点
     __next_node->_M_prev = __prev_node;
+    //析构释放数据
     _Destroy(&__n->_M_data);
+    //释放节点
     _M_put_node(__n);
+    //返回下个节点迭代器
     return iterator((_Node*) __next_node);
   }
   iterator erase(iterator __first, iterator __last);
@@ -419,15 +442,19 @@ public:
   void resize(size_type __new_size, const _Tp& __x);
   void resize(size_type __new_size) { this->resize(__new_size, _Tp()); }
 
+  //pop_front() 和 pop_back()内部都调用erase()
   void pop_front() { erase(begin()); }
   void pop_back() { 
     iterator __tmp = end();
     erase(--__tmp);
   }
+
+  //构造函数__n个__value
   list(size_type __n, const _Tp& __value,
        const allocator_type& __a = allocator_type())
     : _Base(__a)
     { insert(begin(), __n, __value); }
+  //构造函数__n个大小，元素用默认值
   explicit list(size_type __n)
     : _Base(allocator_type())
     { insert(begin(), __n, _Tp()); }
@@ -490,16 +517,17 @@ public:
 #endif /* __STL_MEMBER_TEMPLATES */
 
 protected:
+  //迁移操作 将[first, last)内的所有元素移动到position之前
   void transfer(iterator __position, iterator __first, iterator __last) {
     if (__position != __last) {
       // Remove [first, last) from its old position.
-      __last._M_node->_M_prev->_M_next     = __position._M_node;
-      __first._M_node->_M_prev->_M_next    = __last._M_node;
-      __position._M_node->_M_prev->_M_next = __first._M_node; 
+      __last._M_node->_M_prev->_M_next     = __position._M_node;    //将要移动到position前的节点的最后一个节点的next域指向position节点
+      __first._M_node->_M_prev->_M_next    = __last._M_node;        //将要移动到position前的节点的第一个节点的前一个节点的next域指向last
+      __position._M_node->_M_prev->_M_next = __first._M_node;       //将position的前一个节点的next域指向要移动position前的节点的第一个节点
 
       // Splice [first, last) into its new position.
-      _List_node_base* __tmp      = __position._M_node->_M_prev;
-      __position._M_node->_M_prev = __last._M_node->_M_prev;
+      _List_node_base* __tmp      = __position._M_node->_M_prev;    //保存position前一个节点
+      __position._M_node->_M_prev = __last._M_node->_M_prev;        //将
       __last._M_node->_M_prev     = __first._M_node->_M_prev; 
       __first._M_node->_M_prev    = __tmp;
     }
@@ -707,29 +735,31 @@ list<_Tp, _Alloc>::_M_assign_dispatch(_InputIter __first2, _InputIter __last2,
 
 #endif /* __STL_MEMBER_TEMPLATES */
 
+//将数值为__value的所有元素移除
 template <class _Tp, class _Alloc>
 void list<_Tp, _Alloc>::remove(const _Tp& __value)
 {
   iterator __first = begin();
   iterator __last = end();
-  while (__first != __last) {
+  while (__first != __last) {       //遍历所有节点
     iterator __next = __first;
     ++__next;
-    if (*__first == __value) erase(__first);
+    if (*__first == __value) erase(__first);    //找到就移除
     __first = __next;
   }
 }
 
+//移除数值相同的连续元素。注意，只是“连续而相同的元素”，才会被移除剩一个，可以先排序后使用
 template <class _Tp, class _Alloc>
 void list<_Tp, _Alloc>::unique()
 {
   iterator __first = begin();
   iterator __last = end();
-  if (__first == __last) return;
+  if (__first == __last) return;    //空链表 返回
   iterator __next = __first;
-  while (++__next != __last) {
-    if (*__first == *__next)
-      erase(__next);
+  while (++__next != __last) {      //遍历每一个节点
+    if (*__first == *__next)        //如果前后两个节点所保存元素的值相同
+      erase(__next);                //移除它
     else
       __first = __next;
     __next = __first;

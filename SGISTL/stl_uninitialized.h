@@ -37,6 +37,7 @@ __STL_BEGIN_NAMESPACE
 
 // Valid if copy construction is equivalent to assignment, and if the
 //  destructor is trivial.
+// POD类型，调用memcpy()
 template <class _InputIter, class _ForwardIter>
 inline _ForwardIter 
 __uninitialized_copy_aux(_InputIter __first, _InputIter __last,
@@ -46,6 +47,7 @@ __uninitialized_copy_aux(_InputIter __first, _InputIter __last,
   return copy(__first, __last, __result);
 }
 
+// 非POD类型，逐个调用拷贝构造函数 如果构造过程中出错抛出异常，析构已构造的对象
 template <class _InputIter, class _ForwardIter>
 _ForwardIter 
 __uninitialized_copy_aux(_InputIter __first, _InputIter __last,
@@ -67,10 +69,12 @@ inline _ForwardIter
 __uninitialized_copy(_InputIter __first, _InputIter __last,
                      _ForwardIter __result, _Tp*)
 {
+  //使用类型萃取，对POD类型使用memcpy()，非OPD类型逐个调用构造函数
   typedef typename __type_traits<_Tp>::is_POD_type _Is_POD;
   return __uninitialized_copy_aux(__first, __last, __result, _Is_POD());
 }
 
+//将[__first, __last)复制一份到[__result, __result+__last-__first)
 template <class _InputIter, class _ForwardIter>
 inline _ForwardIter
   uninitialized_copy(_InputIter __first, _InputIter __last,
@@ -140,6 +144,7 @@ uninitialized_copy_n(_InputIter __first, _Size __count,
 
 // Valid if copy construction is equivalent to assignment, and if the
 // destructor is trivial.
+//对于POD类型调用memset
 template <class _ForwardIter, class _Tp>
 inline void
 __uninitialized_fill_aux(_ForwardIter __first, _ForwardIter __last, 
@@ -148,6 +153,7 @@ __uninitialized_fill_aux(_ForwardIter __first, _ForwardIter __last,
   fill(__first, __last, __x);
 }
 
+//对于非POD类型逐个调用构造函数 如果中途抛出异常，析构已经构造的对象
 template <class _ForwardIter, class _Tp>
 void
 __uninitialized_fill_aux(_ForwardIter __first, _ForwardIter __last, 
@@ -170,6 +176,7 @@ inline void __uninitialized_fill(_ForwardIter __first,
                    
 }
 
+//对[__first, __last)中迭代器所指向的内存，已__x为参数调用_Tp的拷贝构造函数
 template <class _ForwardIter, class _Tp>
 inline void uninitialized_fill(_ForwardIter __first,
                                _ForwardIter __last, 
@@ -180,6 +187,7 @@ inline void uninitialized_fill(_ForwardIter __first,
 
 // Valid if copy construction is equivalent to assignment, and if the
 //  destructor is trivial.
+//对于POD类型逐个执行赋值操作
 template <class _ForwardIter, class _Size, class _Tp>
 inline _ForwardIter
 __uninitialized_fill_n_aux(_ForwardIter __first, _Size __n,
@@ -188,6 +196,7 @@ __uninitialized_fill_n_aux(_ForwardIter __first, _Size __n,
   return fill_n(__first, __n, __x);
 }
 
+//对于非POD类型逐个调用构造函数 如果中途抛出异常，析构已经构造的对象
 template <class _ForwardIter, class _Size, class _Tp>
 _ForwardIter
 __uninitialized_fill_n_aux(_ForwardIter __first, _Size __n,
@@ -210,6 +219,7 @@ __uninitialized_fill_n(_ForwardIter __first, _Size __n, const _Tp& __x, _Tp1*)
   return __uninitialized_fill_n_aux(__first, __n, __x, _Is_POD());
 }
 
+//从__first开始构造__n个_Tp对象，已__x为模版
 template <class _ForwardIter, class _Size, class _Tp>
 inline _ForwardIter 
 uninitialized_fill_n(_ForwardIter __first, _Size __n, const _Tp& __x)
