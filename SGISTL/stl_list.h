@@ -521,29 +521,41 @@ protected:
   void transfer(iterator __position, iterator __first, iterator __last) {
     if (__position != __last) {
       // Remove [first, last) from its old position.
-      __last._M_node->_M_prev->_M_next     = __position._M_node;    //将要移动到position前的节点的最后一个节点的next域指向position节点
-      __first._M_node->_M_prev->_M_next    = __last._M_node;        //将要移动到position前的节点的第一个节点的前一个节点的next域指向last
-      __position._M_node->_M_prev->_M_next = __first._M_node;       //将position的前一个节点的next域指向要移动position前的节点的第一个节点
+      //将要移动到position前的节点的最后一个节点的next域指向position节点
+      __last._M_node->_M_prev->_M_next     = __position._M_node;
+      //将要移动到position前的节点的第一个节点的前一个节点的next域指向last
+      __first._M_node->_M_prev->_M_next    = __last._M_node;        
+      //将position的前一个节点的next域指向要移动position前的节点的第一个节点
+      __position._M_node->_M_prev->_M_next = __first._M_node;
 
       // Splice [first, last) into its new position.
-      _List_node_base* __tmp      = __position._M_node->_M_prev;    //保存position前一个节点
-      __position._M_node->_M_prev = __last._M_node->_M_prev;        //将
-      __last._M_node->_M_prev     = __first._M_node->_M_prev; 
-      __first._M_node->_M_prev    = __tmp;
+      //保存position前一个节点
+      _List_node_base* __tmp      = __position._M_node->_M_prev;
+      //将position的prev域指向last的前一个节点
+      __position._M_node->_M_prev = __last._M_node->_M_prev;
+      //将last的prev域指向first的前一个节点
+      __last._M_node->_M_prev     = __first._M_node->_M_prev;
+      //最后将first的prev域指向postion的前一个节点
+      __first._M_node->_M_prev    = __tmp;                          
     }
   }
 
 public:
+  //splice 将某连续范围内的元素从一个list移动到另一个(或同一个)list的某个定点。
+  //将x接合于position所指位置之前，x必须不同于*this
   void splice(iterator __position, list& __x) {
     if (!__x.empty()) 
       this->transfer(__position, __x.begin(), __x.end());
   }
+  //将i所指元素接合于position所指位置之前。position和i可指向同一个list
   void splice(iterator __position, list&, iterator __i) {
     iterator __j = __i;
     ++__j;
     if (__position == __i || __position == __j) return;
     this->transfer(__position, __i, __j);
   }
+  //将[first, last)内的所有元素接合于position之前，position和[first, last)可以指向同一个list
+  //但position不能位于[first,last)之内
   void splice(iterator __position, list&, iterator __first, iterator __last) {
     if (__first != __last) 
       this->transfer(__position, __first, __last);
@@ -766,6 +778,7 @@ void list<_Tp, _Alloc>::unique()
   }
 }
 
+//将x合并到*this身上，两个list的内容必须先经过递增排序
 template <class _Tp, class _Alloc>
 void list<_Tp, _Alloc>::merge(list<_Tp, _Alloc>& __x)
 {
@@ -793,33 +806,39 @@ inline void __List_base_reverse(_List_node_base* __p)
   } while (__tmp != __p);
 }
 
+//将*this的内容逆向重置
 template <class _Tp, class _Alloc>
 inline void list<_Tp, _Alloc>::reverse() 
 {
   __List_base_reverse(this->_M_node);
 }    
 
+//排序 归并排序
 template <class _Tp, class _Alloc>
 void list<_Tp, _Alloc>::sort()
 {
   // Do nothing if the list has length 0 or 1.
+  // 如果是空链表或者只有一个元素，不需要排序。
   if (_M_node->_M_next != _M_node && _M_node->_M_next->_M_next != _M_node) {
+    //新的lists，作为中介数据存储区
     list<_Tp, _Alloc> __carry;
     list<_Tp, _Alloc> __counter[64];
     int __fill = 0;
-    while (!empty()) {
-      __carry.splice(__carry.begin(), *this, begin());
+    while (!empty()) {      //直到当前list为空
+      __carry.splice(__carry.begin(), *this, begin());  //先将begin()节点移动到__carry中，放在__carry.begin()之前
       int __i = 0;
-      while(__i < __fill && !__counter[__i].empty()) {
-        __counter[__i].merge(__carry);
-        __carry.swap(__counter[__i++]);
+      while(__i < __fill && !__counter[__i].empty()) {  //如果___i小于__fill 而且 __counter[__i]不为空 合并下
+        __counter[__i].merge(__carry);                  //合并__carry到__counter[__i]  __carry变为空
+        __carry.swap(__counter[__i++]);                 //交换__counter[__i] 和 __carry  __carry不为空 __counter[__i]为空     i自加1
       }
-      __carry.swap(__counter[__i]);         
-      if (__i == __fill) ++__fill;
+      __carry.swap(__counter[__i]);                     //交换__counter[__i] 和 __carry  __carry置为空，而__counter[__i]不为空
+      if (__i == __fill) ++__fill;                      //如果__i已经和__fill相等 就将__fill自加1
     } 
 
+    //数据已经全部排序，并放在了__counter数组中，遍历数组，合并它们
     for (int __i = 1; __i < __fill; ++__i)
       __counter[__i].merge(__counter[__i-1]);
+    //和排好序的新链表__counter[__fill-1]交换下
     swap(__counter[__fill-1]);
   }
 }
