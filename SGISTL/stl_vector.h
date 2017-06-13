@@ -62,9 +62,9 @@ public:
   
 protected:
   allocator_type _M_data_allocator;
-  _Tp* _M_start;
-  _Tp* _M_finish;
-  _Tp* _M_end_of_storage;
+  _Tp* _M_start;            //目前使用空间的头
+  _Tp* _M_finish;           //目前使用空间的尾
+  _Tp* _M_end_of_storage;   //目前可用空间的尾
 
   _Tp* _M_allocate(size_t __n)
     { return _M_data_allocator.allocate(__n); }
@@ -138,9 +138,9 @@ public:
   ~_Vector_base() { _M_deallocate(_M_start, _M_end_of_storage - _M_start); }
 
 protected:
-  _Tp* _M_start;
-  _Tp* _M_finish;
-  _Tp* _M_end_of_storage;
+  _Tp* _M_start;            //目前使用空间的头
+  _Tp* _M_finish;           //目前使用空间的尾
+  _Tp* _M_end_of_storage;   //目前可用空间的尾
 
   typedef simple_alloc<_Tp, _Alloc> _M_data_allocator;
   _Tp* _M_allocate(size_t __n)
@@ -161,6 +161,7 @@ class vector : protected _Vector_base<_Tp, _Alloc>
 private:
   typedef _Vector_base<_Tp, _Alloc> _Base;
 public:
+  //vector 的嵌套型别定义
   typedef _Tp value_type;
   typedef value_type* pointer;
   typedef const value_type* const_pointer;
