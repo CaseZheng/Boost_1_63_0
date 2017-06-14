@@ -37,6 +37,7 @@ __STL_BEGIN_NAMESPACE
 
 // Forward declarations of operators < and ==, needed for friend declaration.
 
+//缺省使用deque作为底层容器
 template <class _Tp, 
           class _Sequence __STL_DEPENDENT_DEFAULT_TMPL(deque<_Tp>) >
 class queue;
@@ -82,11 +83,12 @@ public:
   typedef typename _Sequence::reference       reference;
   typedef typename _Sequence::const_reference const_reference;
 protected:
-  _Sequence c;
+  _Sequence c;      //底层容器
 public:
   queue() : c() {}
   explicit queue(const _Sequence& __c) : c(__c) {}
 
+  //所有操作都借助底层容器的方法完成
   bool empty() const { return c.empty(); }
   size_type size() const { return c.size(); }
   reference front() { return c.front(); }

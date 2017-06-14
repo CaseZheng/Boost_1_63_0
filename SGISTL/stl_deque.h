@@ -76,16 +76,20 @@ __STL_BEGIN_NAMESPACE
 
 // Note: this function is simply a kludge to work around several compilers'
 //  bugs in handling constant expressions.
+//如果size小于512B，则为512/size, 否则传回1
 inline size_t __deque_buf_size(size_t __size) {
   return __size < 512 ? size_t(512 / __size) : size_t(1);
 }
 
+//deque迭代器
 template <class _Tp, class _Ref, class _Ptr>
-struct _Deque_iterator {
+struct _Deque_iterator {                //此处未继承std::iterator
   typedef _Deque_iterator<_Tp, _Tp&, _Tp*>             iterator;
   typedef _Deque_iterator<_Tp, const _Tp&, const _Tp*> const_iterator;
+  //决定缓冲区大小的函数 
   static size_t _S_buffer_size() { return __deque_buf_size(sizeof(_Tp)); }
 
+  //未继承std::iterator 需要定义五个必要的迭代器相应类型
   typedef random_access_iterator_tag iterator_category;
   typedef _Tp value_type;
   typedef _Ptr pointer;
@@ -96,10 +100,11 @@ struct _Deque_iterator {
 
   typedef _Deque_iterator _Self;
 
-  _Tp* _M_cur;
-  _Tp* _M_first;
-  _Tp* _M_last;
-  _Map_pointer _M_node;
+  //保持和容器的联系
+  _Tp* _M_cur;      //指向缓冲区当前所指元素
+  _Tp* _M_first;    //指向缓冲区的头
+  _Tp* _M_last;     //指向缓冲区的尾(含备用空间)
+  _Map_pointer _M_node;     //指向map 中控器中指向当前缓冲区的节点
 
   _Deque_iterator(_Tp* __x, _Map_pointer __y) 
     : _M_cur(__x), _M_first(*__y),
@@ -120,43 +125,49 @@ struct _Deque_iterator {
   }
 
   _Self& operator++() {
-    ++_M_cur;
-    if (_M_cur == _M_last) {
-      _M_set_node(_M_node + 1);
-      _M_cur = _M_first;
+    ++_M_cur;                   //切换至下一个元素
+    if (_M_cur == _M_last) {    //已到达缓冲区尾端
+      _M_set_node(_M_node + 1);     //切换到下一个缓冲区
+      _M_cur = _M_first;        //指向其起一个元素
     }
     return *this; 
   }
-  _Self operator++(int)  {
+  _Self operator++(int)  {      //后置++
     _Self __tmp = *this;
     ++*this;
     return __tmp;
   }
 
-  _Self& operator--() {
-    if (_M_cur == _M_first) {
-      _M_set_node(_M_node - 1);
-      _M_cur = _M_last;
+  _Self& operator--() {         //切换至上一个元素
+    if (_M_cur == _M_first) {   //已到达缓冲区的头部
+      _M_set_node(_M_node - 1); //切换到上一个缓冲区
+      _M_cur = _M_last;         //当前节点指向其尾端
     }
-    --_M_cur;
+    --_M_cur;                   //让当前节点前移
     return *this;
   }
-  _Self operator--(int) {
+  _Self operator--(int) {       //后置--
     _Self __tmp = *this;
     --*this;
     return __tmp;
   }
 
+  //实现随机存取，迭代器可以直接跳跃n个距离
   _Self& operator+=(difference_type __n)
   {
+    //得到从当前缓冲区第一个节点开始要跳跃的距离
     difference_type __offset = __n + (_M_cur - _M_first);
     if (__offset >= 0 && __offset < difference_type(_S_buffer_size()))
+      //在本缓冲区内部，直接跳
       _M_cur += __n;
     else {
+      //算下要跳过多少个缓冲区
       difference_type __node_offset =
         __offset > 0 ? __offset / difference_type(_S_buffer_size())
                    : -difference_type((-__offset - 1) / _S_buffer_size()) - 1;
+      //先直接定位到要跳的那个缓冲区去
       _M_set_node(_M_node + __node_offset);
+      //再定位到要跳到的那个元素，直接跳过去
       _M_cur = _M_first + 
         (__offset - __node_offset * difference_type(_S_buffer_size()));
     }
@@ -188,6 +199,7 @@ struct _Deque_iterator {
   bool operator<=(const _Self& __x) const { return !(__x < *this); }
   bool operator>=(const _Self& __x) const { return !(*this < __x); }
 
+  //设置其指向一个新的缓冲区
   void _M_set_node(_Map_pointer __new_node) {
     _M_node = __new_node;
     _M_first = *__new_node;
@@ -259,8 +271,8 @@ protected:
   void _M_deallocate_map(_Tp** __p, size_t __n) 
     { _M_map_allocator.deallocate(__p, __n); }
 
-  _Tp** _M_map;
-  size_t _M_map_size;
+  _Tp** _M_map;         //指向中控器  是块连续空间，其中每个元素都是一个指针(节点)指向一块缓冲区
+  size_t _M_map_size;   //_M_map内可容纳指针的个数
 };
 
 // Specialization for instanceless allocators.
@@ -349,10 +361,10 @@ protected:
   enum { _S_initial_map_size = 8 };
 
 protected:
-  _Tp** _M_map;
-  size_t _M_map_size;  
-  iterator _M_start;
-  iterator _M_finish;
+  _Tp** _M_map;             //指向map，map是一块连续空间，每个元素都是指针，指向一个缓冲区
+  size_t _M_map_size;       //map中指针个数
+  iterator _M_start;        //第一个节点
+  iterator _M_finish;       //最后一个节点
 
   typedef simple_alloc<_Tp, _Alloc>  _Node_alloc_type;
   typedef simple_alloc<_Tp*, _Alloc> _Map_alloc_type;
@@ -379,16 +391,23 @@ _Deque_base<_Tp,_Alloc>::~_Deque_base() {
   }
 }
 
+//初始化deque的map空间
 template <class _Tp, class _Alloc>
 void
 _Deque_base<_Tp,_Alloc>::_M_initialize_map(size_t __num_elements)
 {
+  //需要节点数=(元素个数/每个缓冲区可容纳元素个数)+1
+  //如果刚好整除，会多分配一个
   size_t __num_nodes = 
     __num_elements / __deque_buf_size(sizeof(_Tp)) + 1;
 
+  //map管理节点数，最少8个，最多所需节点数+2(前后各预备一个，扩充时使用)
   _M_map_size = max((size_t) _S_initial_map_size, __num_nodes + 2);
+  //配置空间
   _M_map = _M_allocate_map(_M_map_size);
 
+  //令__nstart和__nfinish指向全部节点最中央的区段。
+  //保持在最中央，可使头尾两端的扩充量一样大。每个节点可对应一个缓冲区
   _Tp** __nstart = _M_map + (_M_map_size - __num_nodes) / 2;
   _Tp** __nfinish = __nstart + __num_nodes;
     
@@ -397,6 +416,7 @@ _Deque_base<_Tp,_Alloc>::_M_initialize_map(size_t __num_elements)
   }
   __STL_UNWIND((_M_deallocate_map(_M_map, _M_map_size), 
                 _M_map = 0, _M_map_size = 0));
+  //为deque内两个迭代器start和end设置正确雷荣
   _M_start._M_set_node(__nstart);
   _M_finish._M_set_node(__nfinish - 1);
   _M_start._M_cur = _M_start._M_first;
@@ -409,6 +429,7 @@ void _Deque_base<_Tp,_Alloc>::_M_create_nodes(_Tp** __nstart, _Tp** __nfinish)
 {
   _Tp** __cur;
   __STL_TRY {
+    //为map内的每个将要使用的节点配置缓冲区，所有缓冲区加起来即deque的可用空间
     for (__cur = __nstart; __cur < __nfinish; ++__cur)
       *__cur = _M_allocate_node();
   }
@@ -423,6 +444,7 @@ _Deque_base<_Tp,_Alloc>::_M_destroy_nodes(_Tp** __nstart, _Tp** __nfinish)
     _M_deallocate_node(*__n);
 }
 
+//缺省使用alloc作为配置器
 template <class _Tp, class _Alloc = __STL_DEFAULT_ALLOCATOR(_Tp) >
 class deque : protected _Deque_base<_Tp, _Alloc> {
 
@@ -432,6 +454,7 @@ class deque : protected _Deque_base<_Tp, _Alloc> {
 
   typedef _Deque_base<_Tp, _Alloc> _Base;
 public:                         // Basic types
+  //先定义各种基础类型
   typedef _Tp value_type;
   typedef value_type* pointer;
   typedef const value_type* const_pointer;
@@ -660,10 +683,13 @@ public:                         // push_* and pop_*
   
   void push_back(const value_type& __t) {
     if (_M_finish._M_cur != _M_finish._M_last - 1) {
+      //最后缓冲区还有一个以上的可用空间，直接在可用空间构造
       construct(_M_finish._M_cur, __t);
+      //调整下最后缓冲区的状态
       ++_M_finish._M_cur;
     }
     else
+      //最后缓冲区没空间，或者只剩一个元素备用空间
       _M_push_back_aux(__t);
   }
 
@@ -687,30 +713,36 @@ public:                         // push_* and pop_*
 
   void push_front() {
     if (_M_start._M_cur != _M_start._M_first) {
-      construct(_M_start._M_cur - 1);
-      --_M_start._M_cur;
+      //第一个缓冲区有备用空间
+      construct(_M_start._M_cur - 1);   //直接在备用空间构造
+      --_M_start._M_cur;                //调整第一个缓冲区使用状态
     }
     else
+      //第一个缓冲区已无别用空间
       _M_push_front_aux();
   }
 
 
   void pop_back() {
     if (_M_finish._M_cur != _M_finish._M_first) {
-      --_M_finish._M_cur;
-      destroy(_M_finish._M_cur);
+      //最后缓冲区有一个(或更多)元素
+      --_M_finish._M_cur;       //调整指针
+      destroy(_M_finish._M_cur);    //析构元素
     }
     else
-      _M_pop_back_aux();
+      //最后缓冲区没有任何元素
+      _M_pop_back_aux();        //缓冲区释放
   }
 
   void pop_front() {
     if (_M_start._M_cur != _M_start._M_last - 1) {
-      destroy(_M_start._M_cur);
-      ++_M_start._M_cur;
+      //第一个缓冲区有一个(或更多)元素
+      destroy(_M_start._M_cur); //析构第一个元素
+      ++_M_start._M_cur;        //调整指针
     }
     else 
-      _M_pop_front_aux();
+      //第一个缓冲区仅有一个元素
+      _M_pop_front_aux();       //释放第一个缓冲区
   }
 
 public:                         // Insert
@@ -781,17 +813,18 @@ public:                         // Insert
   void resize(size_type new_size) { resize(new_size, value_type()); }
 
 public:                         // Erase
+  //清除pos所指的元素，pos为清除点
   iterator erase(iterator __pos) {
     iterator __next = __pos;
     ++__next;
-    difference_type __index = __pos - _M_start;
-    if (size_type(__index) < (this->size() >> 1)) {
-      copy_backward(_M_start, __pos, __next);
-      pop_front();
+    difference_type __index = __pos - _M_start;     //清楚点之前的元素个数
+    if (size_type(__index) < (this->size() >> 1)) { //如果清楚点之前的元素比较少
+      copy_backward(_M_start, __pos, __next);       //就移动清楚点之前的元素
+      pop_front();                                  //移动完毕，最前面的元素冗余，去除
     }
-    else {
-      copy(__next, _M_finish, __pos);
-      pop_back();
+    else {  //清除点之后的元素比较少
+      copy(__next, _M_finish, __pos);   //移动清除点之后的元素
+      pop_back();                       //移动完毕，最后一个元素冗余，去除
     }
     return _M_start + __index;
   }
@@ -885,12 +918,16 @@ protected:                      // Allocation of _M_map and nodes
   //  add the nodes.  Can invalidate _M_map pointers.  (And consequently, 
   //  deque iterators.)
 
+  //_M_reserve_map_at_back 和 _M_reserve_map_at_front 分别用来判断map尾端
+  //和前端节点备用空间，如果不足了需要重新换个map
   void _M_reserve_map_at_back (size_type __nodes_to_add = 1) {
+    //如果map尾端的节点备用空间不足，换个map
     if (__nodes_to_add + 1 > _M_map_size - (_M_finish._M_node - _M_map))
       _M_reallocate_map(__nodes_to_add, false);
   }
 
   void _M_reserve_map_at_front (size_type __nodes_to_add = 1) {
+    //如果map前端的节点备用空间不足，换个map
     if (__nodes_to_add > size_type(_M_start._M_node - _M_map))
       _M_reallocate_map(__nodes_to_add, true);
   }
@@ -1028,24 +1065,34 @@ deque<_Tp,_Alloc>::erase(iterator __first, iterator __last)
   }
 }
 
+//清除整个deque，deque的最初状态(无任何元素时)保有一个缓冲区，因此，
+//clear()完成后恢复初始状态，也保留一个缓冲区
 template <class _Tp, class _Alloc> 
 void deque<_Tp,_Alloc>::clear()
 {
+  //对除头和尾的所有缓冲区
   for (_Map_pointer __node = _M_start._M_node + 1;
        __node < _M_finish._M_node;
        ++__node) {
+    //析构缓冲区的所有元素
     destroy(*__node, *__node + _S_buffer_size());
+    //释放空间
     _M_deallocate_node(*__node);
   }
 
   if (_M_start._M_node != _M_finish._M_node) {
+    //有头和尾两个缓冲区 析构头缓冲区
     destroy(_M_start._M_cur, _M_start._M_last);
+    //析构尾缓冲区
     destroy(_M_finish._M_first, _M_finish._M_cur);
+    //析构尾缓冲区 保留头缓冲区
     _M_deallocate_node(_M_finish._M_first);
   }
   else
+    //只有一个缓冲区，析构元素，但不释放缓冲区，保留它
     destroy(_M_start._M_cur, _M_finish._M_cur);
 
+  //调整状态
   _M_finish = _M_start;
 }
 
@@ -1055,8 +1102,10 @@ template <class _Tp, class _Alloc>
 void deque<_Tp,_Alloc>::_M_fill_initialize(const value_type& __value) {
   _Map_pointer __cur;
   __STL_TRY {
+    //为每个节点的缓冲区设定初值
     for (__cur = _M_start._M_node; __cur < _M_finish._M_node; ++__cur)
       uninitialized_fill(*__cur, *__cur + _S_buffer_size(), __value);
+    //最后一个缓冲区特殊处理，有备用空间，不需要设定初值
     uninitialized_fill(_M_finish._M_first, _M_finish._M_cur, __value);
   }
   __STL_UNWIND(destroy(_M_start, iterator(*__cur, __cur)));
@@ -1104,16 +1153,17 @@ void deque<_Tp,_Alloc>::_M_range_initialize(_ForwardIterator __first,
 #endif /* __STL_MEMBER_TEMPLATES */
 
 // Called only if _M_finish._M_cur == _M_finish._M_last - 1.
+// 只有当最后一个缓冲区只剩一个备用元素空间时才会被调用
 template <class _Tp, class _Alloc>
 void deque<_Tp,_Alloc>::_M_push_back_aux(const value_type& __t)
 {
   value_type __t_copy = __t;
-  _M_reserve_map_at_back();
-  *(_M_finish._M_node + 1) = _M_allocate_node();
+  _M_reserve_map_at_back();     //如果符合条件则必须换一个map
+  *(_M_finish._M_node + 1) = _M_allocate_node();    //配置一个新节点(缓冲区)
   __STL_TRY {
-    construct(_M_finish._M_cur, __t_copy);
-    _M_finish._M_set_node(_M_finish._M_node + 1);
-    _M_finish._M_cur = _M_finish._M_first;
+    construct(_M_finish._M_cur, __t_copy);          //构造值
+    _M_finish._M_set_node(_M_finish._M_node + 1);   //设定finish指向缓冲区
+    _M_finish._M_cur = _M_finish._M_first;          //设定finish状态
   }
   __STL_UNWIND(_M_deallocate_node(*(_M_finish._M_node + 1)));
 }
@@ -1133,16 +1183,17 @@ void deque<_Tp,_Alloc>::_M_push_back_aux()
 }
 
 // Called only if _M_start._M_cur == _M_start._M_first.
+// 只有当第一个缓冲区没有备用空间了才会调用
 template <class _Tp, class _Alloc>
 void  deque<_Tp,_Alloc>::_M_push_front_aux(const value_type& __t)
 {
   value_type __t_copy = __t;
-  _M_reserve_map_at_front();
-  *(_M_start._M_node - 1) = _M_allocate_node();
+  _M_reserve_map_at_front();        //符合某种规则则换个map
+  *(_M_start._M_node - 1) = _M_allocate_node(); //配置新缓冲区
   __STL_TRY {
-    _M_start._M_set_node(_M_start._M_node - 1);
-    _M_start._M_cur = _M_start._M_last - 1;
-    construct(_M_start._M_cur, __t_copy);
+    _M_start._M_set_node(_M_start._M_node - 1); //设定_M_start指定新缓冲区
+    _M_start._M_cur = _M_start._M_last - 1;     //设置_M_start状态
+    construct(_M_start._M_cur, __t_copy);       //构造值
   }
   __STL_UNWIND((++_M_start, _M_deallocate_node(*(_M_start._M_node - 1))));
 } 
@@ -1165,10 +1216,10 @@ void deque<_Tp,_Alloc>::_M_push_front_aux()
 template <class _Tp, class _Alloc>
 void deque<_Tp,_Alloc>::_M_pop_back_aux()
 {
-  _M_deallocate_node(_M_finish._M_first);
-  _M_finish._M_set_node(_M_finish._M_node - 1);
-  _M_finish._M_cur = _M_finish._M_last - 1;
-  destroy(_M_finish._M_cur);
+  _M_deallocate_node(_M_finish._M_first);       //释放最后一个缓冲区
+  _M_finish._M_set_node(_M_finish._M_node - 1); //调整_M_finish状态
+  _M_finish._M_cur = _M_finish._M_last - 1;     //让_M_finish指向上一个缓冲区的最后一个元素
+  destroy(_M_finish._M_cur);        //析构该元素
 }
 
 // Called only if _M_start._M_cur == _M_start._M_last - 1.  Note that 
@@ -1178,9 +1229,9 @@ void deque<_Tp,_Alloc>::_M_pop_back_aux()
 template <class _Tp, class _Alloc>
 void deque<_Tp,_Alloc>::_M_pop_front_aux()
 {
-  destroy(_M_start._M_cur);
-  _M_deallocate_node(_M_start._M_first);
-  _M_start._M_set_node(_M_start._M_node + 1);
+  destroy(_M_start._M_cur);                     //析构第一缓冲区的第一个元素
+  _M_deallocate_node(_M_start._M_first);        //释放第一缓冲区
+  _M_start._M_set_node(_M_start._M_node + 1);   //调整_M_start状态
   _M_start._M_cur = _M_start._M_first;
 }      
 
@@ -1575,16 +1626,21 @@ void deque<_Tp,_Alloc>::_M_reallocate_map(size_type __nodes_to_add,
     size_type __new_map_size = 
       _M_map_size + max(_M_map_size, __nodes_to_add) + 2;
 
+    //配置一块空间，准备给新map使用
     _Map_pointer __new_map = _M_allocate_map(__new_map_size);
     __new_nstart = __new_map + (__new_map_size - __new_num_nodes) / 2
                          + (__add_at_front ? __nodes_to_add : 0);
+    //把原map内容拷贝过来
     copy(_M_start._M_node, _M_finish._M_node + 1, __new_nstart);
+    //释放原map
     _M_deallocate_map(_M_map, _M_map_size);
 
+    //设定新map的起始地址与大小
     _M_map = __new_map;
     _M_map_size = __new_map_size;
   }
 
+  //重新设定迭代器start和finish
   _M_start._M_set_node(__new_nstart);
   _M_finish._M_set_node(__new_nstart + __old_num_nodes - 1);
 }
