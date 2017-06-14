@@ -168,8 +168,8 @@ public:
   typedef typename _Sequence::reference       reference;
   typedef typename _Sequence::const_reference const_reference;
 protected:
-  _Sequence c;
-  _Compare comp;
+  _Sequence c;      //底层容器
+  _Compare comp;    //元素大小比较标准
 public:
   priority_queue() : c() {}
   explicit priority_queue(const _Compare& __x) :  c(), comp(__x) {}
