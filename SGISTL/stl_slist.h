@@ -46,6 +46,7 @@ __slist_make_link(_Slist_node_base* __prev_node,
   return __new_node;
 }
 
+//找到__node的前一个节点
 inline _Slist_node_base* 
 __slist_previous(_Slist_node_base* __head,
                  const _Slist_node_base* __node)
