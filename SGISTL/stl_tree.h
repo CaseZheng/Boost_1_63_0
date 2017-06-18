@@ -218,39 +218,45 @@ inline _Value* value_type(const _Rb_tree_iterator<_Value, _Ref, _Ptr>&) {
 
 #endif /* __STL_CLASS_PARTIAL_SPECIALIZATION */
 
+//全局函数，新节点必为红节点，如果插入处的父节点也是红节点，违反红黑树规则，必须旋转树形
 inline void 
 _Rb_tree_rotate_left(_Rb_tree_node_base* __x, _Rb_tree_node_base*& __root)
 {
-  _Rb_tree_node_base* __y = __x->_M_right;
+  //__x为旋转点
+  _Rb_tree_node_base* __y = __x->_M_right;  //令__y为旋转点的右子节点
   __x->_M_right = __y->_M_left;
   if (__y->_M_left !=0)
-    __y->_M_left->_M_parent = __x;
+    __y->_M_left->_M_parent = __x;          //设定父节点
   __y->_M_parent = __x->_M_parent;
 
-  if (__x == __root)
+  //令__y完全顶替__x的地位
+  if (__x == __root)                        //__x为根节点
     __root = __y;
-  else if (__x == __x->_M_parent->_M_left)
+  else if (__x == __x->_M_parent->_M_left)  //__x为父节点的左子节点
     __x->_M_parent->_M_left = __y;
-  else
+  else                                      //__x为父节点的右子节点
     __x->_M_parent->_M_right = __y;
   __y->_M_left = __x;
   __x->_M_parent = __y;
 }
 
+//全局函数，新节点必为红节点，如果插入处的父节点也是红节点，违反红黑树规则，必须旋转树形
 inline void 
 _Rb_tree_rotate_right(_Rb_tree_node_base* __x, _Rb_tree_node_base*& __root)
 {
-  _Rb_tree_node_base* __y = __x->_M_left;
+  //__x为旋转点
+  _Rb_tree_node_base* __y = __x->_M_left;   //令__y为旋转点的左子节点
   __x->_M_left = __y->_M_right;
   if (__y->_M_right != 0)
-    __y->_M_right->_M_parent = __x;
+    __y->_M_right->_M_parent = __x;         //设定父节点
   __y->_M_parent = __x->_M_parent;
 
-  if (__x == __root)
+  //令__y完全顶替__x的地位
+  if (__x == __root)                        //__x为根节点
     __root = __y;
-  else if (__x == __x->_M_parent->_M_right)
+  else if (__x == __x->_M_parent->_M_right) //__x为父节点的右子节点
     __x->_M_parent->_M_right = __y;
-  else
+  else                                      //__x为父节点的左子节点
     __x->_M_parent->_M_left = __y;
   __y->_M_right = __x;
   __x->_M_parent = __y;
@@ -1170,6 +1176,7 @@ void _Rb_tree<_Key,_Value,_KeyOfValue,_Compare,_Alloc>
   while (__first != __last) erase(*__first++);
 }
 
+//寻找RB-tree是否右键值为__k的节点
 template <class _Key, class _Value, class _KeyOfValue, 
           class _Compare, class _Alloc>
 typename _Rb_tree<_Key,_Value,_KeyOfValue,_Compare,_Alloc>::iterator 
@@ -1180,9 +1187,9 @@ _Rb_tree<_Key,_Value,_KeyOfValue,_Compare,_Alloc>::find(const _Key& __k)
 
   while (__x != 0) 
     if (!_M_key_compare(_S_key(__x), __k))
-      __y = __x, __x = _S_left(__x);
+      __y = __x, __x = _S_left(__x);        //__x键值大于__k，向左走
     else
-      __x = _S_right(__x);
+      __x = _S_right(__x);                  //否则向右走
 
   iterator __j = iterator(__y);   
   return (__j == end() || _M_key_compare(__k, _S_key(__j._M_node))) ? 
