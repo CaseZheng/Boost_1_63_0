@@ -42,6 +42,7 @@ __STL_BEGIN_NAMESPACE
 
 // Forward declarations of operators < and ==, needed for friend declaration.
 
+//缺省采用递增排序
 template <class _Key, class _Compare __STL_DEPENDENT_DEFAULT_TMPL(less<_Key>),
           class _Alloc = __STL_DEFAULT_ALLOCATOR(_Key) >
 class set;
@@ -67,18 +68,19 @@ public:
 
   typedef _Key     key_type;
   typedef _Key     value_type;
+  //key_compare 和 value_compare使用同一比较函数
   typedef _Compare key_compare;
   typedef _Compare value_compare;
 private:
   typedef _Rb_tree<key_type, value_type, 
                   _Identity<value_type>, key_compare, _Alloc> _Rep_type;
-  _Rep_type _M_t;  // red-black tree representing set
+  _Rep_type _M_t;  //采用红黑树表现set
 public:
   typedef typename _Rep_type::const_pointer pointer;
   typedef typename _Rep_type::const_pointer const_pointer;
   typedef typename _Rep_type::const_reference reference;
   typedef typename _Rep_type::const_reference const_reference;
-  typedef typename _Rep_type::const_iterator iterator;
+  typedef typename _Rep_type::const_iterator iterator;      //iterator定义为RB-tree的const_iterator，set的迭代器无法执行写入操作，因为set的元素有关系到其排序，不能随意改变其值。
   typedef typename _Rep_type::const_iterator const_iterator;
   typedef typename _Rep_type::const_reverse_iterator reverse_iterator;
   typedef typename _Rep_type::const_reverse_iterator const_reverse_iterator;
@@ -99,6 +101,7 @@ public:
     : _M_t(_Compare(), allocator_type())
     { _M_t.insert_unique(__first, __last); }
 
+  //set使用RB-tree的insert_unique()，因为set不允许相同键值存在
   template <class _InputIterator>
   set(_InputIterator __first, _InputIterator __last, const _Compare& __comp,
       const allocator_type& __a = allocator_type())
