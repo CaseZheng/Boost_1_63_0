@@ -46,6 +46,7 @@
 
 __STL_BEGIN_NAMESPACE
 
+//hashtable 节点
 template <class _Val>
 struct _Hashtable_node
 {
@@ -64,7 +65,7 @@ struct _Hashtable_iterator;
 template <class _Val, class _Key, class _HashFcn,
           class _ExtractKey, class _EqualKey, class _Alloc>
 struct _Hashtable_const_iterator;
-
+//hashtable迭代器
 template <class _Val, class _Key, class _HashFcn,
           class _ExtractKey, class _EqualKey, class _Alloc>
 struct _Hashtable_iterator {
@@ -85,8 +86,8 @@ struct _Hashtable_iterator {
   typedef _Val& reference;
   typedef _Val* pointer;
 
-  _Node* _M_cur;
-  _Hashtable* _M_ht;
+  _Node* _M_cur;            //迭代器目前所指之节点
+  _Hashtable* _M_ht;        //保持对容器的联结关系(因为可能需要从bucket调到bucket)
 
   _Hashtable_iterator(_Node* __n, _Hashtable* __tab) 
     : _M_cur(__n), _M_ht(__tab) {}
@@ -573,8 +574,9 @@ _Hashtable_iterator<_Val,_Key,_HF,_ExK,_EqK,_All>&
 _Hashtable_iterator<_Val,_Key,_HF,_ExK,_EqK,_All>::operator++()
 {
   const _Node* __old = _M_cur;
-  _M_cur = _M_cur->_M_next;
+  _M_cur = _M_cur->_M_next;     //如果存在，就是它，否则进入if
   if (!_M_cur) {
+    //根据元素值，定位出下一个bucket，其起点就是
     size_type __bucket = _M_ht->_M_bkt_num(__old->_M_val);
     while (!_M_cur && ++__bucket < _M_ht->_M_buckets.size())
       _M_cur = _M_ht->_M_buckets[__bucket];
