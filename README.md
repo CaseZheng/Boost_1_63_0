@@ -5,3 +5,5 @@
 ## Redis
 ## SGISTL
 ## Skynet
+## Memcached
+## Libevent
