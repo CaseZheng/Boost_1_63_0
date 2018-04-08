@@ -38,13 +38,13 @@ typedef void (*ev_sighandler_t)(int);
  */
 struct evsig_info {
 	/* Event watching ev_signal_pair[1] */
-	struct event ev_signal;
+	struct event ev_signal;                 //用来监听所有的信号事件
 	/* Socketpair used to send notifications from the signal handler */
-	evutil_socket_t ev_signal_pair[2];
+	evutil_socket_t ev_signal_pair[2];      //双端队列
 	/* True iff we've added the ev_signal event yet. */
-	int ev_signal_added;
+	int ev_signal_added;                    //记录ev_signal是否已经注册过
 	/* Count of the number of signals we're currently watching. */
-	int ev_n_signals_added;
+	int ev_n_signals_added;                 //监听的信号个数
 
 	/* Array of previous signal handler objects before Libevent started
 	 * messing with them.  Used to restore old signal handlers. */

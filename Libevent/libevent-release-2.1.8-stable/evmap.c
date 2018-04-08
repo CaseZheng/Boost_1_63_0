@@ -283,6 +283,7 @@ evmap_io_add_(struct event_base *base, evutil_socket_t fd, struct event *ev)
 			return (-1);
 	}
 #endif
+    //获取该fd的I/O队列,不存在则创建,否则直接返回该I/O队列ctx(即建立文件描述符与I/O事件队列间的映射关系,每个fd一个I/O队列)
 	GET_IO_SLOT_AND_CTOR(ctx, io, fd, evmap_io, evmap_io_init,
 						 evsel->fdinfo_len);
 
@@ -327,6 +328,7 @@ evmap_io_add_(struct event_base *base, evutil_socket_t fd, struct event *ev)
 		/* XXX(niels): we cannot mix edge-triggered and
 		 * level-triggered, we should probably assert on
 		 * this. */
+        //往事件多路分发器中注册事件
 		if (evsel->add(base, ev->ev_fd,
 			old, (ev->ev_events & EV_ET) | res, extra) == -1)
 			return (-1);
@@ -336,6 +338,7 @@ evmap_io_add_(struct event_base *base, evutil_socket_t fd, struct event *ev)
 	ctx->nread = (ev_uint16_t) nread;
 	ctx->nwrite = (ev_uint16_t) nwrite;
 	ctx->nclose = (ev_uint16_t) nclose;
+    //将ev插入到I/O事件队列ctx中
 	LIST_INSERT_HEAD(&ctx->events, ev, ev_io_next);
 
 	return (retval);
@@ -438,6 +441,15 @@ evmap_signal_init(struct evmap_signal *entry)
 }
 
 
+/**
+ * Synopsis: evmap_signal_add_ 信号事件注册
+ *
+ * Param: base
+ * Param: sig
+ * Param: ev
+ *
+ * Return: 
+ */
 int
 evmap_signal_add_(struct event_base *base, int sig, struct event *ev)
 {
@@ -450,15 +462,18 @@ evmap_signal_add_(struct event_base *base, int sig, struct event *ev)
 			map, sig, sizeof(struct evmap_signal *)) == -1)
 			return (-1);
 	}
+    //获取信号sig的信号事件队列,不存在则新建,否则直接返回信号队列ctx(即建立文件描述符和信号事件队列间的映射关系,每个sig一个信号队列)
 	GET_SIGNAL_SLOT_AND_CTOR(ctx, map, sig, evmap_signal, evmap_signal_init,
 	    base->evsigsel->fdinfo_len);
 
 	if (LIST_EMPTY(&ctx->events)) {
+        //往事件多路分发器中注册事件
 		if (evsel->add(base, ev->ev_fd, 0, EV_SIGNAL, NULL)
 		    == -1)
 			return (-1);
 	}
 
+    //将ev插入到信号事件队列
 	LIST_INSERT_HEAD(&ctx->events, ev, ev_signal_next);
 
 	return (1);

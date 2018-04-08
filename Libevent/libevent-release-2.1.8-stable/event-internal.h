@@ -84,13 +84,13 @@ extern "C" {
 
 /** Structure to define the backend of a given event_base. */
 struct eventop {
-	/** The name of this backend. */
+	/** The name of this backend. 后端I/O复用技术的名称*/
 	const char *name;
 	/** Function to set up an event_base to use this backend.  It should
 	 * create a new structure holding whatever information is needed to
 	 * run the backend, and return it.  The returned pointer will get
 	 * stored by event_init into the event_base.evbase field.  On failure,
-	 * this function should return NULL. */
+	 * this function should return NULL. 初始化函数*/
 	void *(*init)(struct event_base *);
 	/** Enable reading/writing on a given fd or signal.  'events' will be
 	 * the events that we're trying to enable: one or more of EV_READ,
@@ -99,14 +99,15 @@ struct eventop {
 	 * associated with the fd by the evmap; its size is defined by the
 	 * fdinfo field below.  It will be set to 0 the first time the fd is
 	 * added.  The function should return 0 on success and -1 on error.
+     * 注册事件
 	 */
 	int (*add)(struct event_base *, evutil_socket_t fd, short old, short events, void *fdinfo);
-	/** As "add", except 'events' contains the events we mean to disable. */
+	/** As "add", except 'events' contains the events we mean to disable. 删除事件*/
 	int (*del)(struct event_base *, evutil_socket_t fd, short old, short events, void *fdinfo);
 	/** Function to implement the core of an event loop.  It must see which
 	    added events are ready, and cause event_active to be called for each
 	    active event (usually via event_io_active or such).  It should
-	    return 0 on success and -1 on error.
+	    return 0 on success and -1 on error. 等待事件
 	 */
 	int (*dispatch)(struct event_base *, struct timeval *);
 	/** Function to clean up and free our data from the event_base. */
@@ -180,10 +181,10 @@ struct event_change;
 
 /* List of 'changes' since the last call to eventop.dispatch.  Only maintained
  * if the backend is using changesets. */
-struct event_changelist {
-	struct event_change *changes;
-	int n_changes;
-	int changes_size;
+struct event_changelist {         // 事件更改通知列表
+	struct event_change *changes; // 更改事件
+	int n_changes;                // 数组当前使用大小
+	int changes_size;             // 数组大小
 };
 
 #ifndef EVENT__DISABLE_DEBUG_MODE
@@ -205,32 +206,39 @@ struct event_once {
 	void *arg;
 };
 
+//Libvent的Reactor
 struct event_base {
 	/** Function pointers and other data to describe this event_base's
 	 * backend. */
+    //初始化Reactor时选择的I/O复用机制
 	const struct eventop *evsel;
-	/** Pointer to backend-specific data. */
+	/** Pointer to backend-specific data. 指向I/O复用后端特定数据结构*/
 	void *evbase;
 
 	/** List of changes to tell backend about at next dispatch.  Only used
-	 * by the O(1) backends. */
+	 * by the O(1) backends.
+     * 在下次等待事件发生时直接告知发生的事件 */
 	struct event_changelist changelist;
 
 	/** Function pointers used to describe the backend that this event_base
 	 * uses for signals */
 	const struct eventop *evsigsel;
 	/** Data to implement the common signal handelr code. */
+    /*信号事件处理器所使用的数据结构，封装了一个socketpair创建的管道，用于信号处理函数和事件多路分发器之间的通信*/
 	struct evsig_info sig;
 
 	/** Number of virtual events */
+    /*添加到event_base的虚拟事件数量*/
 	int virtual_event_count;
 	/** Maximum number of virtual events active */
 	int virtual_event_count_max;
 	/** Number of total events added to this event_base */
+    /*添加到event_base的所有事件数量*/
 	int event_count;
 	/** Maximum number of total events added to this event_base */
 	int event_count_max;
 	/** Number of total events active in this event_base */
+    /*添加到event_base的激活事件数量*/
 	int event_count_active;
 	/** Maximum number of total events active in this event_base */
 	int event_count_active_max;
@@ -261,8 +269,10 @@ struct event_base {
 	 * that have triggered, and whose callbacks need to be called).  Low
 	 * priority numbers are more important, and stall higher ones.
 	 */
+    /*活动事件队列数组，索引值越小，优先级越高*/
 	struct evcallback_list *activequeues;
 	/** The length of the activequeues array */
+    /*活动事件队列数组的大小*/
 	int nactivequeues;
 	/** A list of event_callbacks that should become active the next time
 	 * we process events, but not this time. */
@@ -270,6 +280,7 @@ struct event_base {
 
 	/* common timeout logic */
 
+    /*下面三项用于管理通用定时器队列*/
 	/** An array of common_timeout_list* for all of the common timeout
 	 * values we know. */
 	struct common_timeout_list **common_timeout_queues;
@@ -279,12 +290,15 @@ struct event_base {
 	int n_common_timeouts_allocated;
 
 	/** Mapping from file descriptors to enabled (added) events */
+    /*文件描述符和I/O事件之间的映射关系表*/
 	struct event_io_map io;
 
 	/** Mapping from signal numbers to enabled (added) events. */
+    /*信号值和信号事件之间的映射关系表*/
 	struct event_signal_map sigmap;
 
 	/** Priority queue of events with timeouts. */
+    /*时间堆*/
 	struct min_heap timeheap;
 
 	/** Stored timeval: used to avoid calling gettimeofday/clock_gettime
@@ -320,7 +334,7 @@ struct event_base {
 #endif
 
 	/** Flags that this base was configured with */
-	enum event_base_config_flag flags;
+	enum event_base_config_flag flags;      //运行时标记
 
 	struct timeval max_dispatch_time;
 	int max_dispatch_callbacks;

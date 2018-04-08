@@ -2595,6 +2595,7 @@ evutil_accept4_(evutil_socket_t sockfd, struct sockaddr *addr,
 /* Internal function: Set fd[0] and fd[1] to a pair of fds such that writes on
  * fd[0] get read from fd[1].  Make both fds nonblocking and close-on-exec.
  * Return 0 on success, -1 on failure.
+ * 创建一个双向管道 pipe 或 socketpair 并将其设为非阻塞
  */
 int
 evutil_make_internal_pipe_(evutil_socket_t fd[2])

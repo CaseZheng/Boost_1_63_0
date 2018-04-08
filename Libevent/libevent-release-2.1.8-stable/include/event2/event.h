@@ -529,23 +529,25 @@ enum event_method_feature {
 enum event_base_config_flag {
 	/** Do not allocate a lock for the event base, even if we have
 	    locking set up.
-
 	    Setting this option will make it unsafe and nonfunctional to call
 	    functions on the base concurrently from multiple threads.
+        不要为event_base分配锁。设置这个选项可以为event_base节省一点用于锁定和解锁的时间，但是让在多个线程中访问event_base成为不安全的。
 	*/
 	EVENT_BASE_FLAG_NOLOCK = 0x01,
 	/** Do not check the EVENT_* environment variables when configuring
-	    an event_base  */
+	    an event_base 选择使用的后端时，不要检测EVENT_*环境变量。使用这个标志需要三思：这会让用户更难调试你的程序与libevent的交互 */
 	EVENT_BASE_FLAG_IGNORE_ENV = 0x02,
 	/** Windows only: enable the IOCP dispatcher at startup
 
 	    If this flag is set then bufferevent_socket_new() and
 	    evconn_listener_new() will use IOCP-backed implementations
 	    instead of the usual select-based one on Windows.
+        仅用于Windows，让libevent在启动时就启用任何必需的IOCP分发逻辑，而不是按需启用
 	 */
 	EVENT_BASE_FLAG_STARTUP_IOCP = 0x04,
 	/** Instead of checking the current time every time the event loop is
 	    ready to run timeout callbacks, check after each timeout callback.
+        不是在事件循环每次准备执行超时回调时检测当前时间，而是在每次超时回调后进行检测。注意：这会消耗更多的CPU时间
 	 */
 	EVENT_BASE_FLAG_NO_CACHE_TIME = 0x08,
 
@@ -562,6 +564,7 @@ enum event_base_config_flag {
 
 	    This flag has no effect if you wind up using a backend other than
 	    epoll.
+        告诉libevent，如果决定使用epoll后端，可以安全地使用更快的基于changelist的后端。epoll-changelist后端可以在后端的分发函数调用之间，同样的fd多次修改其状态的情况下，避免不必要的系统调用。但是如果传递任何使用dup（）或者其变体克隆的fd给libevent，epoll-changelist后端会触发一个内核bug，导致不正确的结果。在不使用epoll后端的情况下，这个标志是没有效果的。也可以通过设置EVENT_EPOLL_USE_CHANGELIST环境变量来打开epoll-changelist选项。
 	 */
 	EVENT_BASE_FLAG_EPOLL_USE_CHANGELIST = 0x10,
 

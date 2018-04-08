@@ -84,8 +84,11 @@
 #endif
 
 struct epollop {
+    //需要监测的事件数组
 	struct epoll_event *events;
+    //数组大小
 	int nevents;
+    //内核事件表fd
 	int epfd;
 #ifdef USING_TIMERFD
 	int timerfd;
@@ -137,12 +140,14 @@ const struct eventop epollops = {
  */
 #define MAX_EPOLL_TIMEOUT_MSEC (35*60*1000)
 
+//epoll I/O复用后端初始化
 static void *
 epoll_init(struct event_base *base)
 {
 	int epfd = -1;
 	struct epollop *epollop;
 
+    //内核事件表创建
 #ifdef EVENT__HAVE_EPOLL_CREATE1
 	/* First, try the shiny new epoll_create1 interface, if we have it. */
 	epfd = epoll_create1(EPOLL_CLOEXEC);
@@ -158,14 +163,16 @@ epoll_init(struct event_base *base)
 		evutil_make_socket_closeonexec(epfd);
 	}
 
+    //内存申请
 	if (!(epollop = mm_calloc(1, sizeof(struct epollop)))) {
 		close(epfd);
 		return (NULL);
 	}
 
+    //保存内核事件表
 	epollop->epfd = epfd;
 
-	/* Initialize fields */
+	/* Initialize fields 空间申请,用于poll_wait*/
 	epollop->events = mm_calloc(INITIAL_NEVENT, sizeof(struct epoll_event));
 	if (epollop->events == NULL) {
 		mm_free(epollop);
@@ -217,6 +224,7 @@ epoll_init(struct event_base *base)
 	}
 #endif
 
+    //信号事件的多路分发器的初始化
 	evsig_init_(base);
 
 	return (epollop);
@@ -352,6 +360,13 @@ epoll_apply_one_change(struct event_base *base,
 	return -1;
 }
 
+/**
+ * Synopsis: epoll_apply_changes epoll将已发生事件直接转移到发生活动事件队列
+ *
+ * Param: base 反应堆
+ *
+ * Return: 
+ */
 static int
 epoll_apply_changes(struct event_base *base)
 {
@@ -371,6 +386,17 @@ epoll_apply_changes(struct event_base *base)
 	return (r);
 }
 
+/**
+ * Synopsis: epoll_nochangelist_add epoll注册事件
+ *
+ * Param: base
+ * Param: fd
+ * Param: old
+ * Param: events
+ * Param: p
+ *
+ * Return: 
+ */
 static int
 epoll_nochangelist_add(struct event_base *base, evutil_socket_t fd,
     short old, short events, void *p)
@@ -379,6 +405,7 @@ epoll_nochangelist_add(struct event_base *base, evutil_socket_t fd,
 	ch.fd = fd;
 	ch.old_events = old;
 	ch.read_change = ch.write_change = ch.close_change = 0;
+    //注册关心的事件
 	if (events & EV_WRITE)
 		ch.write_change = EV_CHANGE_ADD |
 		    (events & EV_ET);
@@ -389,6 +416,7 @@ epoll_nochangelist_add(struct event_base *base, evutil_socket_t fd,
 		ch.close_change = EV_CHANGE_ADD |
 		    (events & EV_ET);
 
+    //内部调用epoll_ctl
 	return epoll_apply_one_change(base, base->evbase, &ch);
 }
 
@@ -410,6 +438,14 @@ epoll_nochangelist_del(struct event_base *base, evutil_socket_t fd,
 	return epoll_apply_one_change(base, base->evbase, &ch);
 }
 
+/**
+ * Synopsis: epoll_dispatch epoll等待事件,移动活动事件
+ *
+ * Param: base
+ * Param: tv
+ *
+ * Return: 
+ */
 static int
 epoll_dispatch(struct event_base *base, struct timeval *tv)
 {
@@ -459,6 +495,7 @@ epoll_dispatch(struct event_base *base, struct timeval *tv)
 
 	EVBASE_RELEASE_LOCK(base, th_base_lock);
 
+    //等待事件发生 获取就绪事件
 	res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
 
 	EVBASE_ACQUIRE_LOCK(base, th_base_lock);
@@ -497,6 +534,7 @@ epoll_dispatch(struct event_base *base, struct timeval *tv)
 		if (!ev)
 			continue;
 
+        //将就绪事件插入活动事件队列
 		evmap_io_active_(base, events[i].data.fd, ev | EV_ET);
 	}
 

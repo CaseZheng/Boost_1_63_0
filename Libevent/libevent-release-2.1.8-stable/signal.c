@@ -140,7 +140,9 @@ evsig_cb(evutil_socket_t fd, short what, void *arg)
 
 	memset(&ncaught, 0, sizeof(ncaught));
 
+    //设置的管道是非阻塞的一直读直到为空
 	while (1) {
+        //从管道中读取信号值
 #ifdef _WIN32
 		n = recv(fd, signals, sizeof(signals), 0);
 #else
@@ -158,6 +160,7 @@ evsig_cb(evutil_socket_t fd, short what, void *arg)
 		for (i = 0; i < n; ++i) {
 			ev_uint8_t sig = signals[i];
 			if (sig < NSIG)
+                //信号发生次数记录,信号值为下标
 				ncaught[sig]++;
 		}
 	}
@@ -165,11 +168,13 @@ evsig_cb(evutil_socket_t fd, short what, void *arg)
 	EVBASE_ACQUIRE_LOCK(base, th_base_lock);
 	for (i = 0; i < NSIG; ++i) {
 		if (ncaught[i])
+            //将信号值对应的信号事件加入活动队列
 			evmap_signal_active_(base, i, ncaught[i]);
 	}
 	EVBASE_RELEASE_LOCK(base, th_base_lock);
 }
 
+//信号事件的多路分发器的初始化
 int
 evsig_init_(struct event_base *base)
 {
@@ -178,6 +183,7 @@ evsig_init_(struct event_base *base)
 	 * pair to wake up our event loop.  The event loop then scans for
 	 * signals that got delivered.
 	 */
+    //双向管道创建
 	if (evutil_make_internal_pipe_(base->sig.ev_signal_pair) == -1) {
 #ifdef _WIN32
 		/* Make this nonfatal on win32, where sometimes people
@@ -192,15 +198,19 @@ evsig_init_(struct event_base *base)
 	if (base->sig.sh_old) {
 		mm_free(base->sig.sh_old);
 	}
+    //base->sig初始化
 	base->sig.sh_old = NULL;
 	base->sig.sh_old_max = 0;
 
+    //为管道设置事件监听
 	event_assign(&base->sig.ev_signal, base, base->sig.ev_signal_pair[0],
 		EV_READ | EV_PERSIST, evsig_cb, base);
 
+    //表明base->sig.ev_signal为内部使用,优先级最高
 	base->sig.ev_signal.ev_flags |= EVLIST_INTERNAL;
 	event_priority_set(&base->sig.ev_signal, 0);
 
+    //反应堆信号的多路分发器赋值
 	base->evsigsel = &evsigops;
 
 	return 0;
@@ -224,6 +234,7 @@ evsig_set_handler_(struct event_base *base,
 	 * resize saved signal handler array up to the highest signal number.
 	 * a dynamic array is used to keep footprint on the low side.
 	 */
+    //内存空间开辟,数组每个元素存放一个信号,信号值等于其下标
 	if (evsignal >= sig->sh_old_max) {
 		int new_max = evsignal + 1;
 		event_debug(("%s: evsignal (%d) >= sh_old_max (%d), resizing",
@@ -249,6 +260,7 @@ evsig_set_handler_(struct event_base *base,
 	}
 
 	/* save previous handler and setup new handler */
+    /设置信号处理函数
 #ifdef EVENT__HAVE_SIGACTION
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = handler;
@@ -274,6 +286,17 @@ evsig_set_handler_(struct event_base *base,
 	return (0);
 }
 
+/**
+ * Synopsis: evsig_add 信号事件注册
+ *
+ * Param: base
+ * Param: evsignal
+ * Param: old
+ * Param: events
+ * Param: p
+ *
+ * Return: 
+ */
 static int
 evsig_add(struct event_base *base, evutil_socket_t evsignal, short old, short events, void *p)
 {
@@ -295,16 +318,19 @@ evsig_add(struct event_base *base, evutil_socket_t evsignal, short old, short ev
 	}
 	evsig_base = base;
 	evsig_base_n_signals_added = ++sig->ev_n_signals_added;
+    //全局变量 设置为管道的写端 有信号触发式将信号值写入管道
 	evsig_base_fd = base->sig.ev_signal_pair[1];
 	EVSIGBASE_UNLOCK();
 
 	event_debug(("%s: %d: changing signal handler", __func__, (int)evsignal));
+    //设置Libevent的信号捕抓函数evsig_handler
 	if (evsig_set_handler_(base, (int)evsignal, evsig_handler) == -1) {
 		goto err;
 	}
 
 
 	if (!sig->ev_signal_added) {
+        //第一次监听信号事件将event_base.sig.ev_signalt添加到event_base中.Libevent并不能为每个信号创建一个event,只有一个内部专门用于监听信号的内部event
 		if (event_add_nolock_(&sig->ev_signal, NULL, 0))
 			goto err;
 		sig->ev_signal_added = 1;
@@ -394,6 +420,7 @@ evsig_handler(int sig)
 #endif
 
 	/* Wake up our notification mechanism */
+    //将信号对应的值写入到管道中,evsig_base_fd是管道的写端,是全局变量
 	msg = sig;
 #ifdef _WIN32
 	send(evsig_base_fd, (char*)&msg, 1, 0);

@@ -130,6 +130,14 @@ int min_heap_adjust_(min_heap_t *s, struct event *e)
 	}
 }
 
+/**
+ * Synopsis: min_heap_reserve_ 最小堆保留扩容
+ *
+ * Param: s
+ * Param: n
+ *
+ * Return: 
+ */
 int min_heap_reserve_(min_heap_t* s, unsigned n)
 {
 	if (s->a < n)
