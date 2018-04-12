@@ -66,19 +66,26 @@ extern "C" {
     @{
  */
 /** A regular event. Uses the evcb_callback callback */
+//常规事件，使用evcb_callback回调
 #define EV_CLOSURE_EVENT 0
 /** A signal event. Uses the evcb_callback callback */
+//信号事件；使用evcb_callback回调
 #define EV_CLOSURE_EVENT_SIGNAL 1
 /** A persistent non-signal event. Uses the evcb_callback callback */
+//永久性非信号事件；使用evcb_callback回调
 #define EV_CLOSURE_EVENT_PERSIST 2
 /** A simple callback. Uses the evcb_selfcb callback. */
+//简单回调，使用evcb_selfcb回调
 #define EV_CLOSURE_CB_SELF 3
 /** A finalizing callback. Uses the evcb_cbfinalize callback. */
+//结束的回调，使用evcb_cbfinalize回调
 #define EV_CLOSURE_CB_FINALIZE 4
 /** A finalizing event. Uses the evcb_evfinalize callback. */
+//结束事件回调，使用evcb_evfinalize回调
 #define EV_CLOSURE_EVENT_FINALIZE 5
 /** A finalizing event that should get freed after. Uses the evcb_evfinalize
  * callback. */
+//结束事件之后应该释放，使用evcb_evfinalize回调
 #define EV_CLOSURE_EVENT_FINALIZE_FREE 6
 /** @} */
 
@@ -117,7 +124,7 @@ struct eventop {
 	int need_reinit;
 	/** Bit-array of supported event_method_features that this backend can
 	 * provide. */
-	enum event_method_feature features;
+	enum event_method_feature features; //后端支持的特征的比特掩码
 	/** Length of the extra information we should record for each fd that
 	    has one or more active events.  This information is recorded
 	    as part of the evmap entry for each fd, and passed as an argument
@@ -245,9 +252,9 @@ struct event_base {
 
 	/** Set if we should terminate the loop once we're done processing
 	 * events. */
-	int event_gotterm;
+	int event_gotterm;      //event_base_loopexit函数通过设置定时回调函数设置
 	/** Set if we should terminate the loop immediately */
-	int event_break;
+	int event_break;        //event_base_loopbreak函数设置
 	/** Set if we should start a new instance of the loop immediately. */
 	int event_continue;
 
@@ -256,7 +263,7 @@ struct event_base {
 
 	/** Set if we're running the event_base_loop function, to prevent
 	 * reentrant invocation. */
-	int running_loop;
+	int running_loop;   //反应堆运行标记
 
 	/** Set to the number of deferred_cbs we've made 'active' in the
 	 * loop.  This is a hack to prevent starvation; it would be smarter
@@ -377,8 +384,8 @@ struct event_config {
 	struct timeval max_dispatch_interval;
 	int max_dispatch_callbacks;
 	int limit_callbacks_after_prio;
-	enum event_method_feature require_features;
-	enum event_base_config_flag flags;
+	enum event_method_feature require_features;     //Libevent所选后端需满足的特征值
+	enum event_base_config_flag flags;              //Libevent运行时标记
 };
 
 /* Internal use only: Functions that might be missing from <sys/queue.h> */

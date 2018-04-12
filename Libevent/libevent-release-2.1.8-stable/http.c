@@ -3108,6 +3108,7 @@ evhttp_uriencode(const char *uri, ev_ssize_t len, int space_as_plus)
 	return (result);
 }
 
+//URL编码，对所有非alphanumeric及-\_的字符都被类似于%和一个2位16进制字符替换(其中空格被+号替换)。
 char *
 evhttp_encode_uri(const char *str)
 {
@@ -3152,6 +3153,7 @@ evhttp_decode_uri_internal(
 	return (j);
 }
 
+//URL解码，得到UTF编码的字符，得到数据所占内存需要自己释放。  
 /* deprecated */
 char *
 evhttp_decode_uri(const char *uri)
@@ -3265,6 +3267,7 @@ done:
 	return result;
 }
 
+//对uri参数进行解析，结果保存在struct evkeyvalq结构体中。  
 int
 evhttp_parse_query(const char *uri, struct evkeyvalq *headers)
 {
@@ -3498,15 +3501,26 @@ evhttp_bind_socket(struct evhttp *http, const char *address, ev_uint16_t port)
 	return (0);
 }
 
+/**
+ * Synopsis: evhttp_bind_socket_with_handle 为evhttp绑定需要监听的ip和port
+ *
+ * Param: http
+ * Param: address
+ * Param: port
+ *
+ * Return: 
+ */
 struct evhttp_bound_socket *
 evhttp_bind_socket_with_handle(struct evhttp *http, const char *address, ev_uint16_t port)
 {
 	evutil_socket_t fd;
 	struct evhttp_bound_socket *bound;
 
+    //绑定socket
 	if ((fd = bind_socket(address, port, 1 /*reuse*/)) == -1)
 		return (NULL);
 
+    //获取监听fd
 	if (listen(fd, 128) == -1) {
 		event_sock_warn(fd, "%s: listen", __func__);
 		evutil_closesocket(fd);
@@ -3553,6 +3567,7 @@ evhttp_accept_socket_with_handle(struct evhttp *http, evutil_socket_t fd)
 	const int flags =
 	    LEV_OPT_REUSEABLE|LEV_OPT_CLOSE_ON_EXEC|LEV_OPT_CLOSE_ON_FREE;
 
+    //创建连接监听器
 	listener = evconnlistener_new(http->base, NULL, NULL,
 	    flags,
 	    0, /* Backlog is '0' because we already said 'listen' */
@@ -3560,6 +3575,7 @@ evhttp_accept_socket_with_handle(struct evhttp *http, evutil_socket_t fd)
 	if (!listener)
 		return (NULL);
 
+    //evhttp绑定连接监听器
 	bound = evhttp_bind_listener(http, listener);
 	if (!bound) {
 		evconnlistener_free(listener);
@@ -3568,6 +3584,14 @@ evhttp_accept_socket_with_handle(struct evhttp *http, evutil_socket_t fd)
 	return (bound);
 }
 
+/**
+ * Synopsis: evhttp_bind_listener evhttp绑定连接监听器
+ *
+ * Param: http
+ * Param: listener
+ *
+ * Return: 
+ */
 struct evhttp_bound_socket *
 evhttp_bind_listener(struct evhttp *http, struct evconnlistener *listener)
 {
@@ -3580,6 +3604,7 @@ evhttp_bind_listener(struct evhttp *http, struct evconnlistener *listener)
 	bound->listener = listener;
 	TAILQ_INSERT_TAIL(&http->sockets, bound, next);
 
+    //连接监听器设置回调函数
 	evconnlistener_set_cb(listener, accept_socket_cb, http);
 	return bound;
 }
@@ -3604,6 +3629,11 @@ evhttp_del_accept_socket(struct evhttp *http, struct evhttp_bound_socket *bound)
 	mm_free(bound);
 }
 
+/**
+ * Synopsis: evhttp_new_object 创建evhttp
+ *
+ * Return: 
+ */
 static struct evhttp*
 evhttp_new_object(void)
 {
@@ -3634,6 +3664,13 @@ evhttp_new_object(void)
 	return (http);
 }
 
+/**
+ * Synopsis: evhttp_new 创建一个evhttp
+ *
+ * Param: base
+ *
+ * Return: 
+ */
 struct evhttp *
 evhttp_new(struct event_base *base)
 {
@@ -3667,6 +3704,11 @@ evhttp_start(const char *address, ev_uint16_t port)
 	return (http);
 }
 
+/**
+ * Synopsis: evhttp_free 释放evhttp
+ *
+ * Param: http
+ */
 void
 evhttp_free(struct evhttp* http)
 {
@@ -3850,6 +3892,16 @@ evhttp_set_allowed_methods(struct evhttp* http, ev_uint16_t methods)
 	http->allowed_methods = methods;
 }
 
+/**
+ * Synopsis: evhttp_set_cb 为特定URL指定回调函数
+ *
+ * Param: http 
+ * Param: uri   特定url
+ * Param: cb    回调函数
+ * Param: cbarg 回调函数参数
+ *
+ * Return: 
+ */
 int
 evhttp_set_cb(struct evhttp *http, const char *uri,
     void (*cb)(struct evhttp_request *, void *), void *cbarg)
@@ -3899,6 +3951,13 @@ evhttp_del_cb(struct evhttp *http, const char *uri)
 	return (0);
 }
 
+/**
+ * Synopsis: evhttp_set_gencb 注册通用回调函数，在没有指定URL回调函数的情况下该回调函数被调用。  
+ *
+ * Param: http
+ * Param: cb        //通用回调函数
+ * Param: cbarg     //通用回调函数参数
+ */
 void
 evhttp_set_gencb(struct evhttp *http,
     void (*cb)(struct evhttp_request *, void *), void *cbarg)
@@ -4058,6 +4117,7 @@ evhttp_request_set_on_complete_cb(struct evhttp_request *req,
 
 /*
  * Allows for inspection of the request URI
+ * 获取当前请求的uri地址
  */
 
 const char *
@@ -4113,6 +4173,7 @@ evhttp_request_get_host(struct evhttp_request *req)
 	return host;
 }
 
+//得到当前请求的类型
 enum evhttp_cmd_type
 evhttp_request_get_command(const struct evhttp_request *req) {
 	return (req->type);
@@ -4687,6 +4748,7 @@ path_matches_noscheme(const char *cp)
 	return 1;
 }
 
+//URI解析，得到evhttp_uri
 struct evhttp_uri *
 evhttp_uri_parse(const char *source_uri)
 {

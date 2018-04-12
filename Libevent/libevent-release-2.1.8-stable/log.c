@@ -81,6 +81,11 @@ event_debug_get_logging_mask_(void)
 #endif
 #endif /* EVENT_DEBUG_LOGGING_ENABLED */
 
+/**
+ * Synopsis: event_enable_debug_logging 设置日志掩码
+ *
+ * Param: which
+ */
 void
 event_enable_debug_logging(ev_uint32_t which)
 {
@@ -89,6 +94,11 @@ event_enable_debug_logging(ev_uint32_t which)
 #endif
 }
 
+/**
+ * Synopsis: event_set_fatal_callback 设置致命错误退出时会调用的回调函数
+ *
+ * Param: cb
+ */
 void
 event_set_fatal_callback(event_fatal_cb cb)
 {
@@ -99,6 +109,7 @@ static void
 event_exit(int errcode)
 {
 	if (fatal_fn) {
+        //设置了回调函数则调用,完成后退出
 		fatal_fn(errcode);
 		exit(errcode); /* should never be reached */
 	} else if (errcode == EVENT_ERR_ABORT_)
@@ -198,6 +209,7 @@ event_logv_(int severity, const char *errstr, const char *fmt, va_list ap)
 	char buf[1024];
 	size_t len;
 
+    //DEBUG日志过滤
 	if (severity == EVENT_LOG_DEBUG && !event_debug_get_logging_mask_())
 		return;
 
@@ -218,6 +230,11 @@ event_logv_(int severity, const char *errstr, const char *fmt, va_list ap)
 
 static event_log_cb log_fn = NULL;
 
+/**
+ * Synopsis: event_set_log_callback 设置日志打印回调函数
+ *
+ * Param: cb
+ */
 void
 event_set_log_callback(event_log_cb cb)
 {
@@ -228,6 +245,7 @@ static void
 event_log(int severity, const char *msg)
 {
 	if (log_fn)
+        //定义了日志回调函数则直接调用
 		log_fn(severity, msg);
 	else {
 		const char *severity_str;
@@ -248,6 +266,7 @@ event_log(int severity, const char *msg)
 			severity_str = "???";
 			break;
 		}
+        //默认错误日志数据到标准错误
 		(void)fprintf(stderr, "[%s] %s\n", severity_str, msg);
 	}
 }

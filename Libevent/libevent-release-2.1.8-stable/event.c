@@ -480,6 +480,11 @@ event_init(void)
     return (base);
 }
 
+/**
+ * Synopsis: event_base_new 创建一个反应堆event_base
+ *
+ * Return: 
+ */
 struct event_base *
 event_base_new(void)
 {
@@ -524,6 +529,7 @@ event_is_method_disabled(const char *name)
     return (evutil_getenv_(environment) != NULL);
 }
 
+//返回event_base所选后端支持的特征值的比特掩码
 int
 event_base_get_features(const struct event_base *base)
 {
@@ -565,6 +571,13 @@ event_disable_debug_mode(void)
 #endif
 }
 
+/**
+ * Synopsis: event_base_new_with_config 根据event_config配置创建event_base反应堆
+ *
+ * Param: cfg
+ *
+ * Return: 
+ */
 struct event_base *
 event_base_new_with_config(const struct event_config *cfg)
 {
@@ -1099,6 +1112,11 @@ event_get_supported_methods(void)
     return (methods);
 }
 
+/**
+ * Synopsis: event_config_new 创建event_config并初始化
+ *
+ * Return: 
+ */
 struct event_config *
 event_config_new(void)
 {
@@ -1135,6 +1153,14 @@ event_config_free(struct event_config *cfg)
     mm_free(cfg);
 }
 
+/**
+ * Synopsis: event_config_set_flag 设置Libevent运行时标记
+ *
+ * Param: cfg
+ * Param: flag
+ *
+ * Return: 
+ */
 int
 event_config_set_flag(struct event_config *cfg, int flag)
 {
@@ -1144,6 +1170,7 @@ event_config_set_flag(struct event_config *cfg, int flag)
     return 0;
 }
 
+//通过名字让 libevent 避免使用特定的可用后端
 int
 event_config_avoid_method(struct event_config *cfg, const char *method)
 {
@@ -1156,6 +1183,7 @@ event_config_avoid_method(struct event_config *cfg, const char *method)
         return (-1);
     }
 
+    //将传入的应避免使用的后端名称保存起来
     TAILQ_INSERT_TAIL(&cfg->entries, entry, next);
 
     return (0);
@@ -1197,6 +1225,7 @@ event_config_set_max_dispatch_interval(struct event_config *cfg,
     return (0);
 }
 
+//设置event_base的优先级数目
 int
 event_priority_init(int npriorities)
 {
@@ -1224,6 +1253,7 @@ event_base_priority_init(struct event_base *base, int npriorities)
     }
 
     /* Allocate our priority queues */
+    //扩充活动事件优先级队列
     base->activequeues = (struct evcallback_list *)
       mm_calloc(npriorities, sizeof(struct evcallback_list));
     if (base->activequeues == NULL) {
@@ -1795,6 +1825,7 @@ event_base_dispatch(struct event_base *event_base)
     return (event_base_loop(event_base, 0));
 }
 
+//返回一个指针,指向event_base所选择的后端的名称
 const char *
 event_base_get_method(const struct event_base *base)
 {
@@ -1808,7 +1839,7 @@ static void
 event_loopexit_cb(evutil_socket_t fd, short what, void *arg)
 {
     struct event_base *base = arg;
-    base->event_gotterm = 1;
+    base->event_gotterm = 1;        //设置退出循环标记
 }
 
 int
@@ -1818,6 +1849,14 @@ event_loopexit(const struct timeval *tv)
             current_base, tv));
 }
 
+/**
+ * Synopsis: event_base_loopexit 定时使反应堆退出
+ *
+ * Param: event_base
+ * Param: tv
+ *
+ * Return: 
+ */
 int
 event_base_loopexit(struct event_base *event_base, const struct timeval *tv)
 {
@@ -1831,6 +1870,13 @@ event_loopbreak(void)
     return (event_base_loopbreak(current_base));
 }
 
+/**
+ * Synopsis: event_base_loopbreak 使反应堆立即退出
+ *
+ * Param: event_base
+ *
+ * Return: 
+ */
 int
 event_base_loopbreak(struct event_base *event_base)
 {
@@ -1839,7 +1885,7 @@ event_base_loopbreak(struct event_base *event_base)
         return (-1);
 
     EVBASE_ACQUIRE_LOCK(event_base, th_base_lock);
-    event_base->event_break = 1;
+    event_base->event_break = 1;        //设置退出循环标记
 
     if (EVBASE_NEED_NOTIFY(event_base)) {
         r = evthread_notify_base(event_base);
@@ -1897,6 +1943,14 @@ event_loop(int flags)
     return event_base_loop(current_base, flags);
 }
 
+/**
+ * Synopsis: event_base_loop 会运行一个event_base直到没有event注册进来，循环运行，不断重复判断是否有注册的event触发。  
+ *
+ * Param: base
+ * Param: flags 改变event_base_loop的标记 EVLOOP_ONCE EVLOOP_NONBLOCK EVLOOP_NO_EXIT_ON_EMPTY
+ *
+ * Return: 
+ */
 int
 event_base_loop(struct event_base *base, int flags)
 {
@@ -1937,15 +1991,16 @@ event_base_loop(struct event_base *base, int flags)
         base->n_deferreds_queued = 0;
 
         /* Terminate the loop if we have been asked to */
-        if (base->event_gotterm) {
+        if (base->event_gotterm) {      //退出循环标记
             break;
         }
 
-        if (base->event_break) {
+        if (base->event_break) {      //退出循环标记
             break;
         }
 
         tv_p = &tv;
+        //如果没有活动事件 而且 未设置EVLOOP_NONBLOCK则获取等待时间
         if (!N_ACTIVE_CALLBACKS(base) && !(flags & EVLOOP_NONBLOCK)) {
             //获取时间堆堆顶元素的超时值,即I/O复用系统调用本次应该设置的超时值
             timeout_next(base, &tv_p);
@@ -1969,6 +2024,7 @@ event_base_loop(struct event_base *base, int flags)
 
         clear_time_cache(base);
 
+        //获取活动事件
         res = evsel->dispatch(base, tv_p);
 
         if (res == -1) {
@@ -2093,7 +2149,7 @@ int
 event_assign(struct event *ev, struct event_base *base, evutil_socket_t fd, short events, void (*callback)(evutil_socket_t, short, void *), void *arg)
 {
     if (!base)
-        base = current_base;
+        base = current_base;            //未传反应堆默认是全局的
     if (arg == &event_self_cbarg_ptr_)
         arg = ev;
 
@@ -2109,13 +2165,15 @@ event_assign(struct event *ev, struct event_base *base, evutil_socket_t fd, shor
     //监听的fd
     ev->ev_fd = fd;
     //关心事件
-    ev->ev_events = events;
+    ev->ev_events = events;         //event关注事件
     ev->ev_res = 0;
-    ev->ev_flags = EVLIST_INIT;
+    ev->ev_flags = EVLIST_INIT;     //event状态
     ev->ev_ncalls = 0;
     ev->ev_pncalls = NULL;
 
+    //根据标记设置执行回调函数的行为
     if (events & EV_SIGNAL) {
+        //参数检测 信号事件不能设置EV_READ|EV_WRITE|EV_CLOSED
         if ((events & (EV_READ|EV_WRITE|EV_CLOSED)) != 0) {
             event_warnx("%s: EV_SIGNAL is not compatible with "
                 "EV_READ, EV_WRITE or EV_CLOSED", __func__);
@@ -2134,7 +2192,7 @@ event_assign(struct event *ev, struct event_base *base, evutil_socket_t fd, shor
     min_heap_elem_init_(ev);
 
     if (base != NULL) {
-        /* by default, we put new events into the middle priority */
+        /* by default, we put new events into the middle priority 默认事件的优先级设置为base->nactivequeues/2*/
         ev->ev_pri = base->nactivequeues / 2;
     }
 
@@ -2341,6 +2399,7 @@ event_callback_finalize_many_(struct event_base *base, int n_cbs, struct event_c
 /*
  * Set's the priority of an event - if an event is already scheduled
  * changing the priority is going to fail.
+ * 设置事件的优先级 越小优先级越高[0, ev_base->nactivequeues)
  */
 
 int
@@ -2360,6 +2419,7 @@ event_priority_set(struct event *ev, int pri)
 
 /*
  * Checks if a specific event is pending or scheduled.
+ * 检测给出的event事件是未决的还是活动的
  */
 
 int
@@ -2406,6 +2466,16 @@ event_initialized(const struct event *ev)
     return 1;
 }
 
+/**
+ * Synopsis: event_get_assignment 拷贝了event分配的所有字段到提供的指针。如果指针为空,则忽略。
+ *
+ * Param: event
+ * Param: base_out
+ * Param: fd_out
+ * Param: events_out
+ * Param: callback_out
+ * Param: arg_out
+ */
 void
 event_get_assignment(const struct event *event, struct event_base **base_out, evutil_socket_t *fd_out, short *events_out, event_callback_fn *callback_out, void **arg_out)
 {
@@ -2429,6 +2499,13 @@ event_get_struct_event_size(void)
     return sizeof(struct event);
 }
 
+/**
+ * Synopsis: event_get_fd 返回事件监听的fd或信号值
+ *
+ * Param: ev
+ *
+ * Return: 
+ */
 evutil_socket_t
 event_get_fd(const struct event *ev)
 {
@@ -2436,6 +2513,13 @@ event_get_fd(const struct event *ev)
     return ev->ev_fd;
 }
 
+/**
+ * Synopsis: event_get_base 返回事件所从属的event_base
+ *
+ * Param: ev
+ *
+ * Return: 
+ */
 struct event_base *
 event_get_base(const struct event *ev)
 {
@@ -2443,6 +2527,13 @@ event_get_base(const struct event *ev)
     return ev->ev_base;
 }
 
+/**
+ * Synopsis: event_get_events 返回事件的标志(EV_READ、EV_WRITE等)
+ *
+ * Param: ev
+ *
+ * Return: 
+ */
 short
 event_get_events(const struct event *ev)
 {
@@ -2450,6 +2541,13 @@ event_get_events(const struct event *ev)
     return ev->ev_events;
 }
 
+/**
+ * Synopsis: event_get_callback 返回event回调函数
+ *
+ * Param: ev
+ *
+ * Return: 
+ */
 event_callback_fn
 event_get_callback(const struct event *ev)
 {
@@ -2457,6 +2555,13 @@ event_get_callback(const struct event *ev)
     return ev->ev_callback;
 }
 
+/**
+ * Synopsis: event_get_callback_arg 返回event回调函数参数指针
+ *
+ * Param: ev
+ *
+ * Return: 
+ */
 void *
 event_get_callback_arg(const struct event *ev)
 {
@@ -2464,6 +2569,13 @@ event_get_callback_arg(const struct event *ev)
     return ev->ev_arg;
 }
 
+/**
+ * Synopsis: event_get_priority 返回了事件当前分配的优先级  
+ *
+ * Param: ev
+ *
+ * Return: 
+ */
 int
 event_get_priority(const struct event *ev)
 {
@@ -2624,11 +2736,10 @@ event_add_nolock_(struct event *ev, const struct timeval *tv,
     /*
      * prepare for timeout insertion further below, if we get a
      * failure on any step, we should not change any state.
-     * 定时器事件,调整下最小堆
+     * 事件定时,但事件不在时间堆中,调整下最小堆
      */
     if (tv != NULL && !(ev->ev_flags & EVLIST_TIMEOUT)) {
-        if (min_heap_reserve_(&base->timeheap,
-            1 + min_heap_size_(&base->timeheap)) == -1)
+        if (min_heap_reserve_(&base->timeheap, 1 + min_heap_size_(&base->timeheap)) == -1)
             return (-1);  /* ENOMEM == errno */
     }
 
@@ -2898,6 +3009,13 @@ event_del_nolock_(struct event *ev, int blocking)
     return (res);
 }
 
+/**
+ * Synopsis: event_active 使ev以标志res(EV_READ、EV_WRITE、EV_TIMEOUT的组合)激活,ev不需要预先的被未决,激活event也不需要使其未决。  
+ *
+ * Param: ev
+ * Param: res
+ * Param: ncalls
+ */
 void
 event_active(struct event *ev, int res, short ncalls)
 {
@@ -2916,6 +3034,13 @@ event_active(struct event *ev, int res, short ncalls)
 }
 
 
+/**
+ * Synopsis: event_active_nolock_ 激活事件
+ *
+ * Param: ev
+ * Param: res
+ * Param: ncalls
+ */
 void
 event_active_nolock_(struct event *ev, int res, short ncalls)
 {
@@ -3482,6 +3607,7 @@ event_get_method(void)
 }
 
 #ifndef EVENT__DISABLE_MM_REPLACEMENT
+//Libevent内存管理函数
 static void *(*mm_malloc_fn_)(size_t sz) = NULL;
 static void *(*mm_realloc_fn_)(void *p, size_t sz) = NULL;
 static void (*mm_free_fn_)(void *p) = NULL;
@@ -3492,6 +3618,7 @@ event_mm_malloc_(size_t sz)
     if (sz == 0)
         return NULL;
 
+    //未定义则使用malloc
     if (mm_malloc_fn_)
         return mm_malloc_fn_(sz);
     else
@@ -3573,6 +3700,7 @@ event_mm_free_(void *ptr)
         free(ptr);
 }
 
+//更换Libevent内部内存管理函数的API
 void
 event_set_mem_functions(void *(*malloc_fn)(size_t sz),
             void *(*realloc_fn)(void *ptr, size_t sz),

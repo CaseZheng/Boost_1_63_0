@@ -339,6 +339,15 @@ bufferevent_writecb(evutil_socket_t fd, short event, void *arg)
 	bufferevent_decref_and_unlock_(bufev);
 }
 
+/**
+ * Synopsis: bufferevent_socket_new 创建基于套接字的bufferevent
+ *
+ * Param: base 反应堆
+ * Param: fd 套接字fd
+ * Param: options bufferevent选项
+ *
+ * Return: 
+ */
 struct bufferevent *
 bufferevent_socket_new(struct event_base *base, evutil_socket_t fd,
     int options)
@@ -354,6 +363,7 @@ bufferevent_socket_new(struct event_base *base, evutil_socket_t fd,
 	if ((bufev_p = mm_calloc(1, sizeof(struct bufferevent_private)))== NULL)
 		return NULL;
 
+    //bufferevent初始化
 	if (bufferevent_init_common_(bufev_p, base, &bufferevent_ops_socket,
 				    options) < 0) {
 		mm_free(bufev_p);
@@ -362,8 +372,11 @@ bufferevent_socket_new(struct event_base *base, evutil_socket_t fd,
 	bufev = &bufev_p->bev;
 	evbuffer_set_flags(bufev->output, EVBUFFER_FLAG_DRAINS_TO_FD);
 
+    //初始化读事件
 	event_assign(&bufev->ev_read, bufev->ev_base, fd,
 	    EV_READ|EV_PERSIST|EV_FINALIZE, bufferevent_readcb, bufev);
+
+    //初始化写事件
 	event_assign(&bufev->ev_write, bufev->ev_base, fd,
 	    EV_WRITE|EV_PERSIST|EV_FINALIZE, bufferevent_writecb, bufev);
 
@@ -375,6 +388,15 @@ bufferevent_socket_new(struct event_base *base, evutil_socket_t fd,
 	return bufev;
 }
 
+/**
+ * Synopsis: bufferevent_socket_connect 如果还没有为 bufferevent 设置套接字，调用函数将为其分配一个新的流套接字，并且设置为非阻塞的。如果已经为 bufferevent 设置套接字，调用 bufferevent_socket_connect()将告知 libevent 套接字还未连接，直到连接成功之前不应该对其进行读取或者写入操作。连接完成之前可以向输出缓冲区添加数据。如果连接成功启动，函数返回0；如果发生错误则返回-1。 
+ *
+ * Param: bev
+ * Param: sa
+ * Param: socklen
+ *
+ * Return: 
+ */
 int
 bufferevent_socket_connect(struct bufferevent *bev,
     const struct sockaddr *sa, int socklen)

@@ -357,6 +357,11 @@ evbuffer_chain_incref(struct evbuffer_chain *chain)
     ++chain->refcnt;
 }
 
+/**
+ * Synopsis: evbuffer_new evbuffer创建
+ *
+ * Return: 
+ */
 struct evbuffer *
 evbuffer_new(void)
 {
@@ -1717,7 +1722,7 @@ done:
 
 #define EVBUFFER_CHAIN_MAX_AUTO_SIZE 4096
 
-/* Adds data to an event buffer */
+/* Adds data to an event buffer 添加数据到evbuffer */
 
 int
 evbuffer_add(struct evbuffer *buf, const void *data_in, size_t datlen)

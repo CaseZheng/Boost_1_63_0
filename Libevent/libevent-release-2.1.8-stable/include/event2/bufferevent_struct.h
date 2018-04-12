@@ -69,7 +69,7 @@ struct event_watermark {
 **/
 struct bufferevent {
 	/** Event base for which this bufferevent was created. */
-	struct event_base *ev_base;
+	struct event_base *ev_base;     //反应堆
 	/** Pointer to a table of function pointers to set up how this
 	    bufferevent behaves. */
 	const struct bufferevent_ops *be_ops;
@@ -77,36 +77,36 @@ struct bufferevent {
 	/** A read event that triggers when a timeout has happened or a socket
 	    is ready to read data.  Only used by some subtypes of
 	    bufferevent. */
-	struct event ev_read;
+	struct event ev_read;       //用于监测socket读事件
 	/** A write event that triggers when a timeout has happened or a socket
 	    is ready to write data.  Only used by some subtypes of
 	    bufferevent. */
-	struct event ev_write;
+	struct event ev_write;      //用于监测socket写事件
 
 	/** An input buffer. Only the bufferevent is allowed to add data to
 	    this buffer, though the user is allowed to drain it. */
-	struct evbuffer *input;
+	struct evbuffer *input;     //输入缓冲区
 
 	/** An input buffer. Only the bufferevent is allowed to drain data
 	    from this buffer, though the user is allowed to add it. */
-	struct evbuffer *output;
+	struct evbuffer *output;    //输出缓冲区
 
 	struct event_watermark wm_read;
 	struct event_watermark wm_write;
 
-	bufferevent_data_cb readcb;
-	bufferevent_data_cb writecb;
+	bufferevent_data_cb readcb;     //读取回调
+	bufferevent_data_cb writecb;    //写入回调
 	/* This should be called 'eventcb', but renaming it would break
 	 * backward compatibility */
-	bufferevent_event_cb errorcb;
-	void *cbarg;
+	bufferevent_event_cb errorcb;   //发生错误时回调
+	void *cbarg;                    //回调参数
 
 	struct timeval timeout_read;
 	struct timeval timeout_write;
 
 	/** Events that are currently enabled: currently EV_READ and EV_WRITE
 	    are supported. */
-	short enabled;
+	short enabled;              //当前开启的事件
 };
 
 #ifdef __cplusplus

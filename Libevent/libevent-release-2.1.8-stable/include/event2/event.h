@@ -497,17 +497,21 @@ int event_config_avoid_method(struct event_config *cfg, const char *method);
    event_config_require_features() to tell Libevent to only proceed if your
    event_base implements a given feature, and you can receive this type from
    event_base_get_features() to see which features are available.
+   后端特征值
 */
 enum event_method_feature {
     /** Require an event method that allows edge-triggered events with EV_ET. */
+    //支持边沿触发的后端
     EV_FEATURE_ET = 0x01,
     /** Require an event method where having one event triggered among
      * many is [approximately] an O(1) operation. This excludes (for
      * example) select and poll, which are approximately O(N) for N
      * equal to the total number of possible events. */
+    //要求添加、删除单个事件,或者确定哪个事件的激活操作是O(1)复杂度的后端
     EV_FEATURE_O1 = 0x02,
     /** Require an event method that allows file descriptors as well as
      * sockets. */
+    //要求支持任意文件描述符,而不仅仅是套接字的后端
     EV_FEATURE_FDS = 0x04,
     /** Require an event method that allows you to use EV_CLOSED to detect
      * connection close without the necessity of reading all the pending data.
@@ -515,6 +519,7 @@ enum event_method_feature {
      * Methods that do support EV_CLOSED may not be able to provide support on
      * all kernel versions.
      **/
+    //要求后台方法允许使用EV_CLOSED特征检测链接是否中断，而不需要读取所有未决数据
     EV_FEATURE_EARLY_CLOSE = 0x08
 };
 
@@ -573,6 +578,7 @@ enum event_base_config_flag {
 	    however, we use less efficient more precise timer, assuming one is
 	    present.
 	 */
+    //通常情况下，libevent使用最快的monotonic计时器实现自己的计时和超时控制, 此模式下，会使用性能较低但是准确性更高的计时器
 	EVENT_BASE_FLAG_PRECISE_TIMER = 0x20
 };
 
@@ -706,6 +712,7 @@ void event_base_free_nofinalize(struct event_base *);
 /** @name Log severities
  */
 /**@{*/
+//日志等级
 #define EVENT_LOG_DEBUG 0
 #define EVENT_LOG_MSG   1
 #define EVENT_LOG_WARN  2
@@ -721,7 +728,7 @@ void event_base_free_nofinalize(struct event_base *);
 
 /**
   A callback function used to intercept Libevent's log messages.
-
+  Libevent日志打印回调函数的类型定义
   @see event_set_log_callback
  */
 typedef void (*event_log_cb)(int severity, const char *msg);
@@ -740,7 +747,7 @@ void event_set_log_callback(event_log_cb cb);
 
 /**
    A function to be called if Libevent encounters a fatal internal error.
-
+   Libevent致命错误退出前回调函数的类型定义
    @see event_set_fatal_callback
  */
 typedef void (*event_fatal_cb)(int err);
@@ -799,14 +806,19 @@ int event_base_set(struct event_base *, struct event *);
 /**@{*/
 /** Block until we have an active event, then exit once all active events
  * have had their callbacks run. */
+// EVLOOP_ONCE 循环将等待某些事件成为激活的，执行激活的事件直到没有更多的事件可以执行，然会返回 即不等待
+
 #define EVLOOP_ONCE	0x01
 /** Do not block: see which events are ready now, run the callbacks
  * of the highest-priority ones, then exit. */
+
+// EVLOOP_NONBLOCK：循环不等待事件被触发，循环将仅仅检测是否有事件已经就绪，可以立即触发，如果有，则执行事件的回调。
 #define EVLOOP_NONBLOCK	0x02
 /** Do not exit the loop because we have no pending events.  Instead, keep
  * running until event_base_loopexit() or event_base_loopbreak() makes us
  * stop.
  */
+// EVLOOP_NO_EXIT_ON_EMPTY ：没有事件仍不退出，而是由其他函数触发退出
 #define EVLOOP_NO_EXIT_ON_EMPTY 0x04
 /**@}*/
 
@@ -924,12 +936,16 @@ int event_base_got_break(struct event_base *);
 /**@{*/
 /** Indicates that a timeout has occurred.  It's not necessary to pass
  * this flag to event_for new()/event_assign() to get a timeout. */
+//定时事件
 #define EV_TIMEOUT	0x01
 /** Wait for a socket or FD to become readable */
+//I/O读
 #define EV_READ		0x02
 /** Wait for a socket or FD to become writeable */
+//I/O写
 #define EV_WRITE	0x04
 /** Wait for a POSIX signal to be raised*/
+//信号事件
 #define EV_SIGNAL	0x08
 /**
  * Persistent event: won't get removed automatically when activated.
@@ -937,8 +953,10 @@ int event_base_got_break(struct event_base *);
  * When a persistent event with a timeout becomes activated, its timeout
  * is reset to 0.
  */
+//表明是一个永久事件, 激活执行后会重新加到队列中等待下一次激活，否则激活执行后会自动移除
 #define EV_PERSIST	0x10
 /** Select edge-triggered behavior, if supported by the backend. */
+//后端ET模式 边沿触发 需要后端支持
 #define EV_ET		0x20
 /**
  * If this option is provided, then event_del() will not block in one thread
@@ -951,6 +969,7 @@ int event_base_got_break(struct event_base *);
  * THIS IS AN EXPERIMENTAL API. IT MIGHT CHANGE BEFORE THE LIBEVENT 2.1 SERIES
  * BECOMES STABLE.
  **/
+//终止事件，如果设置这个选项，则event_del不会阻塞，需要使用event_finalize或者 event_free_finalize以保证多线程安全
 #define EV_FINALIZE     0x40
 /**
  * Detects connection close events.  You can use this to detect when a
@@ -960,12 +979,14 @@ int event_base_got_break(struct event_base *);
  * Not all backends support EV_CLOSED.  To detect or require it, use the
  * feature flag EV_FEATURE_EARLY_CLOSE.
  **/
+//检查事件连接是否关闭；可以使用这个选项来检测链接是否关闭，而不需要读取此链接所有未决数据
 #define EV_CLOSED	0x80
 /**@}*/
 
 /**
    @name evtimer_* macros
 
+    定时事件操作的宏
     Aliases for working with one-shot timer events */
 /**@{*/
 #define evtimer_assign(ev, b, cb, arg) \
@@ -980,6 +1001,7 @@ int event_base_got_break(struct event_base *);
 /**
    @name evsignal_* macros
 
+    信号事件操作的宏
    Aliases for working with signal events
  */
 /**@{*/
@@ -1542,6 +1564,7 @@ const struct timeval *event_base_init_common_timeout(struct event_base *base,
  @param free_fn A replacement for free.
  **/
 EVENT2_EXPORT_SYMBOL
+//更换Libevent内部内存管理函数的API
 void event_set_mem_functions(
 	void *(*malloc_fn)(size_t sz),
 	void *(*realloc_fn)(void *ptr, size_t sz),

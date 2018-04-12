@@ -59,17 +59,22 @@ typedef void (*evconnlistener_errorcb)(struct evconnlistener *, void *);
 
 /** Flag: Indicates that we should not make incoming sockets nonblocking
  * before passing them to the callback. */
+//默认情况下，连接监听器接收新套接字后，会将其设置为非阻塞的，以便将其用于 libevent。如果不想要这种行为，可以设置这个标志。
 #define LEV_OPT_LEAVE_SOCKETS_BLOCKING	(1u<<0)
 /** Flag: Indicates that freeing the listener should close the underlying
  * socket. */
+//如果设置了这个选项，释放连接监听器会关闭底层套接字。
 #define LEV_OPT_CLOSE_ON_FREE		(1u<<1)
 /** Flag: Indicates that we should set the close-on-exec flag, if possible */
+//如果设置了这个选项，连接监听器会为底层套接字设置 close-on-exec 标志。
 #define LEV_OPT_CLOSE_ON_EXEC		(1u<<2)
 /** Flag: Indicates that we should disable the timeout (if any) between when
  * this socket is closed and when we can listen again on the same port. */
+//某些平台在默认情况下，关闭某监听套接字后，要过一会儿其他套接字才可以绑定到同一个端口。设置这个标志会让 libevent 标记套接字是可重用的，这样一旦关闭，可以立即打开其他套接字，在相同端口进行监听。
 #define LEV_OPT_REUSEABLE		(1u<<3)
 /** Flag: Indicates that the listener should be locked so it's safe to use
  * from multiple threadcs at once. */
+//为监听器分配锁，这样就可以在多个线程中安全地使用了
 #define LEV_OPT_THREADSAFE		(1u<<4)
 /** Flag: Indicates that the listener should be created in disabled
  * state. Use evconnlistener_enable() to enable it later. */

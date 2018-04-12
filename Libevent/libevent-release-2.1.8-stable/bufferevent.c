@@ -363,6 +363,15 @@ bufferevent_init_common_(struct bufferevent_private *bufev_private,
 	return 0;
 }
 
+/**
+ * Synopsis: bufferevent_setcb 为bufferevent设置回调函数、回调函数参数
+ *
+ * Param: bufev 要设置回调的bufferevent
+ * Param: readcb 读取回调
+ * Param: writecb 写入回调
+ * Param: eventcb 发生错误回调
+ * Param: cbarg 回调时传入参数
+ */
 void
 bufferevent_setcb(struct bufferevent *bufev,
     bufferevent_data_cb readcb, bufferevent_data_cb writecb,
@@ -398,12 +407,26 @@ bufferevent_getcb(struct bufferevent *bufev,
 	BEV_UNLOCK(bufev);
 }
 
+/**
+ * Synopsis: bufferevent_get_input 返回输入缓冲区
+ *
+ * Param: bufev
+ *
+ * Return: 
+ */
 struct evbuffer *
 bufferevent_get_input(struct bufferevent *bufev)
 {
 	return bufev->input;
 }
 
+/**
+ * Synopsis: bufferevent_get_output 返回输出缓冲区
+ *
+ * Param: bufev
+ *
+ * Return: 
+ */
 struct evbuffer *
 bufferevent_get_output(struct bufferevent *bufev)
 {
@@ -426,6 +449,15 @@ bufferevent_get_priority(const struct bufferevent *bufev)
 	}
 }
 
+/**
+ * Synopsis: bufferevent_write 将内从从data处开始的size字节数据添加到输出缓冲区末尾.
+ *
+ * Param: bufev
+ * Param: data
+ * Param: size
+ *
+ * Return: 
+ */
 int
 bufferevent_write(struct bufferevent *bufev, const void *data, size_t size)
 {
@@ -435,6 +467,14 @@ bufferevent_write(struct bufferevent *bufev, const void *data, size_t size)
 	return 0;
 }
 
+/**
+ * Synopsis: bufferevent_write_buffer 移除buf的所有内容,将其放置到输出缓冲区末尾.
+ *
+ * Param: bufev
+ * Param: buf
+ *
+ * Return: 
+ */
 int
 bufferevent_write_buffer(struct bufferevent *bufev, struct evbuffer *buf)
 {
@@ -444,18 +484,43 @@ bufferevent_write_buffer(struct bufferevent *bufev, struct evbuffer *buf)
 	return 0;
 }
 
+/**
+ * Synopsis: bufferevent_read 至多从输入缓冲区移除size字节的数据,将其存储到内存中data处,返回实际移除的字节数
+ *
+ * Param: bufev
+ * Param: data
+ * Param: size
+ *
+ * Return: 
+ */
 size_t
 bufferevent_read(struct bufferevent *bufev, void *data, size_t size)
 {
 	return (evbuffer_remove(bufev->input, data, size));
 }
 
+/**
+ * Synopsis: bufferevent_read_buffer 抽空输入缓冲区的所有内容,将其放置到buf中,成功返回0,失败返回-1
+ *
+ * Param: bufev
+ * Param: buf
+ *
+ * Return: 
+ */
 int
 bufferevent_read_buffer(struct bufferevent *bufev, struct evbuffer *buf)
 {
 	return (evbuffer_add_buffer(buf, bufev->input));
 }
 
+/**
+ * Synopsis: bufferevent_enable 开启bufferevent的EV_READ、EV_WRITE事件
+ *
+ * Param: bufev
+ * Param: event
+ *
+ * Return: 
+ */
 int
 bufferevent_enable(struct bufferevent *bufev, short event)
 {
@@ -479,6 +544,16 @@ bufferevent_enable(struct bufferevent *bufev, short event)
 	return r;
 }
 
+/**
+ * Synopsis: bufferevent_set_timeouts 试图读取数据的时候，如果至少等待了 timeout_read 秒，则读取超时事件将被触发。试图写入数据的时候，如果至少等待了 timeout_write 秒，则写入超时事件将被触发。
+注意，只有在读取或者写入的时候才会计算超时。即如果 bufferevent 的读取被禁止，或者输入缓冲区满（达到其高水位），则读取超时被禁止。如果写入被禁止，或者没有数据待写入，则写入超时被禁止。读取或者写入超时发生时，相应的读取或者写入操作被禁止，然后超时事件回调被调用，带有标志BEV_EVENT_TIMEOUT | BEV_EVENT_READING或者BEV_EVENT_TIMEOUT | BEV_EVENT_WRITING。
+ *
+ * Param: bufev
+ * Param: tv_read
+ * Param: tv_write
+ *
+ * Return: 
+ */
 int
 bufferevent_set_timeouts(struct bufferevent *bufev,
 			 const struct timeval *tv_read,
@@ -547,6 +622,14 @@ bufferevent_disable_hard_(struct bufferevent *bufev, short event)
 	return r;
 }
 
+/**
+ * Synopsis: bufferevent_disable 禁用bufferevent的EV_READ、EV_WRITE事件
+ *
+ * Param: bufev
+ * Param: event
+ *
+ * Return: 
+ */
 int
 bufferevent_disable(struct bufferevent *bufev, short event)
 {
@@ -564,6 +647,7 @@ bufferevent_disable(struct bufferevent *bufev, short event)
 
 /*
  * Sets the water marks
+ * 设置bufferevent的读写水位
  */
 
 void
@@ -640,6 +724,15 @@ bufferevent_getwatermark(struct bufferevent *bufev, short events,
 	return -1;
 }
 
+/**
+ * Synopsis: bufferevent_flush 清空 bufferevent 要求 bufferevent 强制从底层传输端口读取或者写入尽可能多的数据，而忽略其他可能保持数据不被写入的限制条件。函数的细节功能依赖于 bufferevent 的具体类型。iotype 参数应该是 EV_READ、EV_WRITE 或者 EV_READ | EV_WRITE，用于指示应该处理读取、写入，还是二者都处理。state 参数可以是 BEV_NORMAL、BEV_FLUSH 或者BEV_FINISHED。BEV_FINISHED 指示应该告知另一端，没有更多数据需要发送了； 而 BEV_NORMAL 和 BEV_FLUSH 的区别依赖于具体的 bufferevent 类型。
+ *
+ * Param: bufev
+ * Param: iotype
+ * Param: mode
+ *
+ * Return: 失败时 bufferevent_flush()返回-1，如果没有数据被清空则返回0，有数据被清空则返回1
+ */
 int
 bufferevent_flush(struct bufferevent *bufev,
     short iotype,
@@ -893,6 +986,13 @@ bufferevent_cancel_all_(struct bufferevent *bev)
 	BEV_UNLOCK(bev);
 }
 
+/**
+ * Synopsis: bufferevent_get_enabled 可以确定bufferevent上当前开启的事件.
+ *
+ * Param: bufev
+ *
+ * Return: 
+ */
 short
 bufferevent_get_enabled(struct bufferevent *bufev)
 {

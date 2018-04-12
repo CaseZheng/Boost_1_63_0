@@ -54,14 +54,15 @@ extern "C" {
 /* For evkeyvalq */
 #include <event2/keyvalq_struct.h>
 
-#define EVLIST_TIMEOUT	    0x01
-#define EVLIST_INSERTED	    0x02
-#define EVLIST_SIGNAL	    0x04
-#define EVLIST_ACTIVE	    0x08
-#define EVLIST_INTERNAL	    0x10
-#define EVLIST_ACTIVE_LATER 0x20
-#define EVLIST_FINALIZING   0x40
-#define EVLIST_INIT	    0x80
+//libevent 用于标记 event信息的字段，表明事件当前的状态
+#define EVLIST_TIMEOUT	    0x01    //event在time堆中
+#define EVLIST_INSERTED	    0x02    //event在已注册事件链表中
+#define EVLIST_SIGNAL	    0x04    //目前未使用
+#define EVLIST_ACTIVE	    0x08    //event在激活链表中
+#define EVLIST_INTERNAL	    0x10    //内部使用事件标记
+#define EVLIST_ACTIVE_LATER 0x20    //事件在下一次激活链表中
+#define EVLIST_FINALIZING   0x40    //event已终止标记
+#define EVLIST_INIT	    0x80        //event已被初始化
 
 #define EVLIST_ALL          0xff
 
@@ -152,7 +153,7 @@ struct event {
 		} ev_signal;
 	} ev_;
 
-	short ev_events;        //事件类型
+	short ev_events;        //监测事件标记
 	short ev_res;		/* result passed to event callback 记录当前激活事件的类型 */
 	struct timeval ev_timeout;  //仅对定时器有效，指定定时器的超时值
 };

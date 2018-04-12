@@ -89,12 +89,12 @@ struct {
 	char *host_cache;
 
 	enum evhttp_request_kind kind;
-	enum evhttp_cmd_type type;
+	enum evhttp_cmd_type type;      //当前请求的类型
 
 	size_t headers_size;
 	size_t body_size;
 
-	char *uri;			/* uri after HTTP request was parsed */
+	char *uri;			/* 请求的uri地址 uri after HTTP request was parsed */
 	struct evhttp_uri *uri_elems;	/* uri elements */
 
 	char major;			/* HTTP Major number */

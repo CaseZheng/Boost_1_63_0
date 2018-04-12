@@ -72,21 +72,25 @@ struct evconnlistener_ops {
 	struct event_base *(*getbase)(struct evconnlistener *);
 };
 
+/**
+ * Synopsis: 连接监听器
+ */
 struct evconnlistener {
-	const struct evconnlistener_ops *ops;
+	const struct evconnlistener_ops *ops;       //连接监听器操作函数
 	void *lock;
-	evconnlistener_cb cb;
+	evconnlistener_cb cb;               //回调函数
 	evconnlistener_errorcb errorcb;
-	void *user_data;
-	unsigned flags;
+	void *user_data;                    //回调函数参数
+	unsigned flags;                     //标记
 	short refcnt;
-	int accept4_flags;
+	int accept4_flags;                  //接收连接标记
 	unsigned enabled : 1;
 };
 
+//连接监听器事件
 struct evconnlistener_event {
 	struct evconnlistener base;
-	struct event listener;
+	struct event listener;              //连接监听器监听事件
 };
 
 #ifdef _WIN32
@@ -181,10 +185,10 @@ evconnlistener_new(struct event_base *base,
 	if (!lev)
 		return NULL;
 
-	lev->base.ops = &evconnlistener_event_ops;
-	lev->base.cb = cb;
-	lev->base.user_data = ptr;
-	lev->base.flags = flags;
+	lev->base.ops = &evconnlistener_event_ops;  //设置连接监听器的操作函数
+	lev->base.cb = cb;                          //设置连接监听器的回调函数
+	lev->base.user_data = ptr;                  //设置连接监听器的回调函数参数
+	lev->base.flags = flags;                    //设置连接监听器的标记
 	lev->base.refcnt = 1;
 
 	lev->base.accept4_flags = 0;
@@ -197,6 +201,7 @@ evconnlistener_new(struct event_base *base,
 		EVTHREAD_ALLOC_LOCK(lev->base.lock, EVTHREAD_LOCKTYPE_RECURSIVE);
 	}
 
+    //设置初始化事件
 	event_assign(&lev->listener, base, fd, EV_READ|EV_PERSIST,
 	    listener_read_cb, lev);
 
@@ -360,6 +365,13 @@ event_listener_getbase(struct evconnlistener *lev)
 	return event_get_base(&lev_e->listener);
 }
 
+/**
+ * Synopsis: evconnlistener_set_cb 连接监听器设置回调函数
+ *
+ * Param: lev   连接监听器
+ * Param: cb    回调函数
+ * Param: arg   回调函数参数
+ */
 void
 evconnlistener_set_cb(struct evconnlistener *lev,
     evconnlistener_cb cb, void *arg)
@@ -384,6 +396,13 @@ evconnlistener_set_error_cb(struct evconnlistener *lev,
 	UNLOCK(lev);
 }
 
+/**
+ * Synopsis: listener_read_cb 连接监听器回调函数
+ *
+ * Param: fd
+ * Param: what
+ * Param: p
+ */
 static void
 listener_read_cb(evutil_socket_t fd, short what, void *p)
 {

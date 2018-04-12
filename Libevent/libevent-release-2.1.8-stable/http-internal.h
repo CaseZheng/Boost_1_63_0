@@ -107,14 +107,14 @@ struct evhttp_connection {
 	int ai_family;
 };
 
-/* A callback for an http server */
+/* A callback for an http server http回调信息记录结构体*/
 struct evhttp_cb {
 	TAILQ_ENTRY(evhttp_cb) next;
 
-	char *what;
+	char *what;     //url
 
-	void (*cb)(struct evhttp_request *req, void *);
-	void *cbarg;
+	void (*cb)(struct evhttp_request *req, void *); //回调函数
+	void *cbarg;    //回调函数参数
 };
 
 /* both the http server as well as the rpc system need to queue connections */
@@ -124,7 +124,7 @@ TAILQ_HEAD(evconq, evhttp_connection);
 struct evhttp_bound_socket {
 	TAILQ_ENTRY(evhttp_bound_socket) next;
 
-	struct evconnlistener *listener;
+	struct evconnlistener *listener;    //连接监听器
 };
 
 /* server alias list item. */
@@ -139,9 +139,9 @@ struct evhttp {
 	TAILQ_ENTRY(evhttp) next_vhost;
 
 	/* All listeners for this host */
-	TAILQ_HEAD(boundq, evhttp_bound_socket) sockets;
+	TAILQ_HEAD(boundq, evhttp_bound_socket) sockets;    //连接监听器 多个
 
-	TAILQ_HEAD(httpcbq, evhttp_cb) callbacks;
+	TAILQ_HEAD(httpcbq, evhttp_cb) callbacks;       //url和回调函数列表
 
 	/* All live connections on this host. */
 	struct evconq connections;
@@ -166,12 +166,12 @@ struct evhttp {
 
 	/* Fallback callback if all the other callbacks for this connection
 	   don't match. */
-	void (*gencb)(struct evhttp_request *req, void *);
-	void *gencbarg;
+	void (*gencb)(struct evhttp_request *req, void *);  //通用回调函数
+	void *gencbarg;                                     //通用回调函数参数
 	struct bufferevent* (*bevcb)(struct event_base *, void *);
 	void *bevcbarg;
 
-	struct event_base *base;
+	struct event_base *base;    //反应堆
 };
 
 /* XXX most of these functions could be static. */

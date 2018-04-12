@@ -99,7 +99,7 @@ struct evbuffer {
 	struct evbuffer_chain **last_with_datap;
 
 	/** Total amount of bytes stored in all chains.*/
-	size_t total_len;
+	size_t total_len;   //evbuffer当前总数据大小
 
 	/** Number of bytes we have added to the buffer since we last tried to
 	 * invoke callbacks. */

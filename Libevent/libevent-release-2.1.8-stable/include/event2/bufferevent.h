@@ -97,12 +97,12 @@ extern "C" {
 
     @{
 */
-#define BEV_EVENT_READING	0x01	/**< error encountered while reading */
-#define BEV_EVENT_WRITING	0x02	/**< error encountered while writing */
-#define BEV_EVENT_EOF		0x10	/**< eof file reached */
-#define BEV_EVENT_ERROR		0x20	/**< unrecoverable error encountered */
-#define BEV_EVENT_TIMEOUT	0x40	/**< user-specified timeout reached */
-#define BEV_EVENT_CONNECTED	0x80	/**< connect operation finished. */
+#define BEV_EVENT_READING	0x01	/**< 读取操作时发生某事件error encountered while reading */
+#define BEV_EVENT_WRITING	0x02	/**< 写入操作时发生某事件error encountered while writing */
+#define BEV_EVENT_EOF		0x10	/**< 遇到文件结束指示eof file reached */
+#define BEV_EVENT_ERROR		0x20	/**< 操作时发生错误,调用EVUTIL_SOCKET_ERROR()获取更错错误信息unrecoverable error encountered */
+#define BEV_EVENT_TIMEOUT	0x40	/**< 发生超时user-specified timeout reached */
+#define BEV_EVENT_CONNECTED	0x80	/**< 请求的连接过程已经完成connect operation finished. */
 /**@}*/
 
 /**
@@ -157,19 +157,23 @@ typedef void (*bufferevent_event_cb)(struct bufferevent *bev, short what, void *
 enum bufferevent_options {
 	/** If set, we close the underlying file
 	 * descriptor/bufferevent/whatever when this bufferevent is freed. */
+    //释放bufferevent时关闭底层传输端口.将关闭底层套接字,释放底层bufferevent等.
 	BEV_OPT_CLOSE_ON_FREE = (1<<0),
 
 	/** If set, and threading is enabled, operations on this bufferevent
 	 * are protected by a lock */
+    //自动为bufferevent分配锁,可以安全的在多个线程中使用bufferevent
 	BEV_OPT_THREADSAFE = (1<<1),
 
 	/** If set, callbacks are run deferred in the event loop. */
+    //设置该标记,bufferevent延迟所有回调
 	BEV_OPT_DEFER_CALLBACKS = (1<<2),
 
 	/** If set, callbacks are executed without locks being held on the
 	* bufferevent.  This option currently requires that
 	* BEV_OPT_DEFER_CALLBACKS also be set; a future version of Libevent
 	* might remove the requirement.*/
+    //默认情况下,如果设置bufferevent为线程安全的,则bufferevent会在调用用户提供的回调时进行锁定.设置该选项让Libevent在执行回调时不锁定.
 	BEV_OPT_UNLOCK_CALLBACKS = (1<<3)
 };
 
