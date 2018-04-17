@@ -79,11 +79,11 @@ struct evconnlistener {
 	const struct evconnlistener_ops *ops;       //连接监听器操作函数
 	void *lock;
 	evconnlistener_cb cb;               //回调函数
-	evconnlistener_errorcb errorcb;
+	evconnlistener_errorcb errorcb;     //错误回调函数 发送错误时调用
 	void *user_data;                    //回调函数参数
 	unsigned flags;                     //标记
 	short refcnt;
-	int accept4_flags;                  //接收连接标记
+	int accept4_flags;                  //接收连接标记 用于接受连接
 	unsigned enabled : 1;
 };
 
@@ -156,6 +156,18 @@ static const struct evconnlistener_ops evconnlistener_event_ops = {
 
 static void listener_read_cb(evutil_socket_t, short, void *);
 
+/**
+ * Synopsis: evconnlistener_new 连接监听器创建
+ *
+ * Param: base
+ * Param: cb
+ * Param: ptr
+ * Param: flags
+ * Param: backlog
+ * Param: fd
+ *
+ * Return: 
+ */
 struct evconnlistener *
 evconnlistener_new(struct event_base *base,
     evconnlistener_cb cb, void *ptr, unsigned flags, int backlog,
@@ -192,12 +204,12 @@ evconnlistener_new(struct event_base *base,
 	lev->base.refcnt = 1;
 
 	lev->base.accept4_flags = 0;
-	if (!(flags & LEV_OPT_LEAVE_SOCKETS_BLOCKING))
+	if (!(flags & LEV_OPT_LEAVE_SOCKETS_BLOCKING))      //未设置LEV_OPT_LEAVE_SOCKETS_BLOCKING标记
 		lev->base.accept4_flags |= EVUTIL_SOCK_NONBLOCK;
-	if (flags & LEV_OPT_CLOSE_ON_EXEC)
+	if (flags & LEV_OPT_CLOSE_ON_EXEC)                  //设置LEV_OPT_CLOSE_ON_EXEC
 		lev->base.accept4_flags |= EVUTIL_SOCK_CLOEXEC;
 
-	if (flags & LEV_OPT_THREADSAFE) {
+	if (flags & LEV_OPT_THREADSAFE) {                   //设置LEV_OPT_DISABLED分配锁,线程安全
 		EVTHREAD_ALLOC_LOCK(lev->base.lock, EVTHREAD_LOCKTYPE_RECURSIVE);
 	}
 
@@ -205,12 +217,25 @@ evconnlistener_new(struct event_base *base,
 	event_assign(&lev->listener, base, fd, EV_READ|EV_PERSIST,
 	    listener_read_cb, lev);
 
-	if (!(flags & LEV_OPT_DISABLED))
+	if (!(flags & LEV_OPT_DISABLED))                    //未设置LEV_OPT_DISABLED
 	    evconnlistener_enable(&lev->base);
 
 	return &lev->base;
 }
 
+/**
+ * Synopsis: evconnlistener_new_bind 绑定 监听
+ *
+ * Param: base
+ * Param: cb
+ * Param: ptr
+ * Param: flags
+ * Param: backlog
+ * Param: sa
+ * Param: socklen
+ *
+ * Return: 
+ */
 struct evconnlistener *
 evconnlistener_new_bind(struct event_base *base, evconnlistener_cb cb,
     void *ptr, unsigned flags, int backlog, const struct sockaddr *sa,
@@ -228,13 +253,15 @@ evconnlistener_new_bind(struct event_base *base, evconnlistener_cb cb,
 	if (flags & LEV_OPT_CLOSE_ON_EXEC)
 		socktype |= EVUTIL_SOCK_CLOEXEC;
 
-	fd = evutil_socket_(family, socktype, 0);
+	fd = evutil_socket_(family, socktype, 0);   //socket创建
 	if (fd == -1)
 		return NULL;
 
+    //SO_KEEPALIVE 保持连接检测对方主机是否崩溃，避免（服务器）永远阻塞于TCP连接的输入。
 	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void*)&on, sizeof(on))<0)
 		goto err;
 
+    //根据标记设置socket属性
 	if (flags & LEV_OPT_REUSEABLE) {
 		if (evutil_make_listen_socket_reuseable(fd) < 0)
 			goto err;
@@ -250,6 +277,7 @@ evconnlistener_new_bind(struct event_base *base, evconnlistener_cb cb,
 			goto err;
 	}
 
+    //绑定
 	if (sa) {
 		if (bind(fd, sa, socklen)<0)
 			goto err;
@@ -265,6 +293,11 @@ err:
 	return NULL;
 }
 
+/**
+ * Synopsis: evconnlistener_free 释放连接监听器
+ *
+ * Param: lev
+ */
 void
 evconnlistener_free(struct evconnlistener *lev)
 {
@@ -288,6 +321,13 @@ event_listener_destroy(struct evconnlistener *lev)
 	event_debug_unassign(&lev_e->listener);
 }
 
+/**
+ * Synopsis: evconnlistener_enable 启动连接监听器
+ *
+ * Param: lev
+ *
+ * Return: 
+ */
 int
 evconnlistener_enable(struct evconnlistener *lev)
 {
@@ -328,7 +368,13 @@ event_listener_disable(struct evconnlistener *lev)
 	    EVUTIL_UPCAST(lev, struct evconnlistener_event, base);
 	return event_del(&lev_e->listener);
 }
-
+/**
+ * Synopsis: evconnlistener_get_fd 返回监听器关联的套接字
+ *
+ * Param: lev
+ *
+ * Return: 
+ */
 evutil_socket_t
 evconnlistener_get_fd(struct evconnlistener *lev)
 {
@@ -347,6 +393,13 @@ event_listener_getfd(struct evconnlistener *lev)
 	return event_get_fd(&lev_e->listener);
 }
 
+/**
+ * Synopsis: evconnlistener_get_base 返回监听器关联的反应堆
+ *
+ * Param: lev
+ *
+ * Return: 
+ */
 struct event_base *
 evconnlistener_get_base(struct evconnlistener *lev)
 {
@@ -387,6 +440,12 @@ evconnlistener_set_cb(struct evconnlistener *lev,
 	UNLOCK(lev);
 }
 
+/**
+ * Synopsis: evconnlistener_set_error_cb 如果使用 evconnlistener_set_error_cb()为监听器设置了错误回调函数，则监听器发生错误时回调函数就会被调用。第一个参数是监听器，第二个参数是调用 evconnlistener_new() 时传入的 ptr。
+ *
+ * Param: lev
+ * Param: errorcb
+ */
 void
 evconnlistener_set_error_cb(struct evconnlistener *lev,
     evconnlistener_errorcb errorcb)
@@ -415,6 +474,7 @@ listener_read_cb(evutil_socket_t fd, short what, void *p)
 	while (1) {
 		struct sockaddr_storage ss;
 		ev_socklen_t socklen = sizeof(ss);
+        //接受连接请求
 		evutil_socket_t new_fd = evutil_accept4_(fd, (struct sockaddr*)&ss, &socklen, lev->accept4_flags);
 		if (new_fd < 0)
 			break;
@@ -434,6 +494,7 @@ listener_read_cb(evutil_socket_t fd, short what, void *p)
 		cb = lev->cb;
 		user_data = lev->user_data;
 		UNLOCK(lev);
+        //回调函数调用
 		cb(lev, new_fd, (struct sockaddr*)&ss, (int)socklen,
 		    user_data);
 		LOCK(lev);

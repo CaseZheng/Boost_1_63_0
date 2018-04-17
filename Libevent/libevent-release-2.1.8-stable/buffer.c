@@ -424,6 +424,14 @@ evbuffer_defer_callbacks(struct evbuffer *buffer, struct event_base *base)
 	return 0;
 }
 
+/**
+ * Synopsis: evbuffer_enable_locking 给evbuffer添加一个锁
+ *
+ * Param: buf
+ * Param: lock
+ *
+ * Return: 
+ */
 int
 evbuffer_enable_locking(struct evbuffer *buf, void *lock)
 {
@@ -574,6 +582,7 @@ evbuffer_decref_and_unlock_(struct evbuffer *buffer)
 		return;
 	}
 
+    //遍历结点 依次释放
 	for (chain = buffer->first; chain != NULL; chain = next) {
 		next = chain->next;
 		evbuffer_chain_free(chain);
@@ -588,6 +597,11 @@ evbuffer_decref_and_unlock_(struct evbuffer *buffer)
 	mm_free(buffer);
 }
 
+/**
+ * Synopsis: evbuffer_free 释放evbuffer和其内容
+ *
+ * Param: buffer
+ */
 void
 evbuffer_free(struct evbuffer *buffer)
 {
@@ -595,18 +609,35 @@ evbuffer_free(struct evbuffer *buffer)
 	evbuffer_decref_and_unlock_(buffer);
 }
 
+/**
+ * Synopsis: evbuffer_lock evbuffer加锁
+ *
+ * Param: buf
+ */
 void
 evbuffer_lock(struct evbuffer *buf)
 {
 	EVBUFFER_LOCK(buf);
 }
 
+/**
+ * Synopsis: evbuffer_unlock evbuffer解锁
+ *
+ * Param: buf
+ */
 void
 evbuffer_unlock(struct evbuffer *buf)
 {
 	EVBUFFER_UNLOCK(buf);
 }
 
+/**
+ * Synopsis: evbuffer_get_length 返回evbuffer存储的字节数
+ *
+ * Param: buffer
+ *
+ * Return: 
+ */
 size_t
 evbuffer_get_length(const struct evbuffer *buffer)
 {
@@ -621,6 +652,13 @@ evbuffer_get_length(const struct evbuffer *buffer)
 	return result;
 }
 
+/**
+ * Synopsis: evbuffer_get_contiguous_space 返回连续地存储在 evbuffer 前面的字节数。evbuffer 中的数据可能存储在多个分隔开的内存块中，这个函数返回当前第一个块中的字节数
+ *
+ * Param: buf
+ *
+ * Return: 
+ */
 size_t
 evbuffer_get_contiguous_space(const struct evbuffer *buf)
 {
@@ -1722,8 +1760,15 @@ done:
 
 #define EVBUFFER_CHAIN_MAX_AUTO_SIZE 4096
 
-/* Adds data to an event buffer 添加数据到evbuffer */
-
+/**
+ * Synopsis: evbuffer_add 添加data处的datlen字节到buf的末尾.
+ *
+ * Param: buf
+ * Param: data_in
+ * Param: datlen
+ *
+ * Return: 
+ */
 int
 evbuffer_add(struct evbuffer *buf, const void *data_in, size_t datlen)
 {

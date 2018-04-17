@@ -79,9 +79,9 @@ struct bufferevent;
 struct evbuffer_chain;
 struct evbuffer {
 	/** The first chain in this buffer's linked list of chains. */
-	struct evbuffer_chain *first;
+	struct evbuffer_chain *first;       //存放数据的结点 指向第一个结点
 	/** The last chain in this buffer's linked list of chains. */
-	struct evbuffer_chain *last;
+	struct evbuffer_chain *last;        //存放数据的结点 指向最后一个结点
 
 	/** Pointer to the next pointer pointing at the 'last_with_data' chain.
 	 *
@@ -168,12 +168,13 @@ typedef ev_off_t ev_misalign_t;
 #endif
 
 /** A single item in an evbuffer. */
+//evbuffer中的单独的结点
 struct evbuffer_chain {
 	/** points to next buffer in the chain */
-	struct evbuffer_chain *next;
+	struct evbuffer_chain *next;        //链表指针,指向下一个结点
 
 	/** total allocation available in the buffer field. */
-	size_t buffer_len;
+	size_t buffer_len;                  //buffer的长度
 
 	/** unused space at the beginning of buffer or an offset into a
 	 * file for sendfile buffers. */
@@ -182,7 +183,7 @@ struct evbuffer_chain {
 	/** Offset into buffer + misalign at which to start writing.
 	 * In other words, the total number of bytes actually stored
 	 * in buffer. */
-	size_t off;
+	size_t off;                         //存放数据大小
 
 	/** Set if special handling is required for this chain */
 	unsigned flags;
@@ -202,7 +203,7 @@ struct evbuffer_chain {
 #define EVBUFFER_MULTICAST	0x0080
 
 	/** number of references to this chain */
-	int refcnt;
+	int refcnt;     //结点的引用计数
 
 	/** Usually points to the read-write memory belonging to this
 	 * buffer allocated as part of the evbuffer_chain allocation.
@@ -210,7 +211,7 @@ struct evbuffer_chain {
 	 * EVBUFFER_IMMUTABLE will be set in flags.  For sendfile, it
 	 * may point to NULL.
 	 */
-	unsigned char *buffer;
+	unsigned char *buffer;      //存放数据的buff
 };
 
 /** callback for a reference chain; lets us know what to do with it when

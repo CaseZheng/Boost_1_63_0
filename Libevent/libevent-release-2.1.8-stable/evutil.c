@@ -356,6 +356,13 @@ evutil_fast_socket_nonblocking(evutil_socket_t fd)
 #endif
 }
 
+/**
+ * Synopsis: evutil_make_listen_socket_reuseable 设置socket SO_REUSEADDR 使其在TIME_WAIT状态也可被重新绑定
+ *
+ * Param: sock
+ *
+ * Return: 
+ */
 int
 evutil_make_listen_socket_reuseable(evutil_socket_t sock)
 {
@@ -371,6 +378,13 @@ evutil_make_listen_socket_reuseable(evutil_socket_t sock)
 #endif
 }
 
+/**
+ * Synopsis: evutil_make_listen_socket_reuseable_port 设置socket SO_REUSEPORT 使其可在可对相同ip相同port重复绑定
+ *
+ * Param: sock
+ *
+ * Return: 
+ */
 int
 evutil_make_listen_socket_reuseable_port(evutil_socket_t sock)
 {
@@ -385,6 +399,14 @@ evutil_make_listen_socket_reuseable_port(evutil_socket_t sock)
 #endif
 }
 
+/**
+ * Synopsis: evutil_make_tcp_listen_socket_deferred 设置socket TCP_DEFER_ACCEPT 只当一个链接有数据时是才会从accpet中返回
+ * 使用TCP_DEFER_ACCEPT可以减少用户程序hold的连接数，也可以减少用户调用epoll_ctl和epoll_wait的次数，从而提高了程序的性能。
+ *
+ * Param: sock
+ *
+ * Return: 
+ */
 int
 evutil_make_tcp_listen_socket_deferred(evutil_socket_t sock)
 {

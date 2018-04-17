@@ -41,6 +41,7 @@ struct evconnlistener;
 /**
    A callback that we invoke when a listener has a new connection.
 
+   连接监听器回调
    @param listener The evconnlistener
    @param fd The new file descriptor
    @param addr The source address of the connection
@@ -100,6 +101,7 @@ typedef void (*evconnlistener_errorcb)(struct evconnlistener *, void *);
  * SO_REUSEPORT does not imply SO_REUSEADDR.
  *
  * This is only available on Linux and kernel 3.9+
+ * 相同ip相同port可被多个进行绑定
  */
 #define LEV_OPT_REUSEABLE_PORT		(1u<<7)
 

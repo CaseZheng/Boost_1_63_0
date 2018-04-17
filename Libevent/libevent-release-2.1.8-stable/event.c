@@ -1155,6 +1155,12 @@ event_config_free(struct event_config *cfg)
 
 /**
  * Synopsis: event_config_set_flag 设置Libevent运行时标记
+    1. EVENT_BASE_FLAG_NOLOCK 不要为 event_base分配锁.设置这个选项可以为event_base节省一点用于锁定和解锁的时间,但是让在多个线程中访问 event_base成为不安全的  
+    2. EVENT_BASE_FLAG_IGNORE_ENV 选择使用的后端时,不要检测EVENT\_\*环境变量.  
+    3. EVENT_BASE_FLAG_STARTUP_IOCP 仅用于 Windows,让 libevent在启动时就启用任何必需的IOCP分发逻辑,而不是按需启用
+    4. EVENT_BASE_FLAG_NO_CACHE_TIME 不是在事件循环每次准备执行超时回调时检测当前时间,而是在每次超时回调后进行检测.注意:这会消耗更多的CPU时间
+    5. EVENT_BASE_FLAG_EPOLL_USE_CHANGELIST 如果决定使用epoll后端,可以安全地使用更快的基于 changelist的后端.epoll-changelist后端可以在后端的分发函数调用之间,同样的fd多次修改其状态的情况下,避免不必要的系统调用.但是如果传递任何使用 dup ()或者其变体克隆的 fd给libevent, epoll-changelist后端会触发一个内核bug,导致不正确的结果.在不使用epoll后端的情况下,这个标志是没有效果的.也可以通过设置 EVENT_EPOLL_USE_CHANGELIST:环境变量来打开epoll-changelist选项.
+    6. EVENT_BASE_FLAG_PRECISE_TIMER 使用更加精确的定时机制
  *
  * Param: cfg
  * Param: flag
@@ -1170,7 +1176,7 @@ event_config_set_flag(struct event_config *cfg, int flag)
     return 0;
 }
 
-//通过名字让 libevent 避免使用特定的可用后端
+//event_config设置 通过名字让 libevent 避免使用特定的可用后端
 int
 event_config_avoid_method(struct event_config *cfg, const char *method)
 {
@@ -1189,6 +1195,14 @@ event_config_avoid_method(struct event_config *cfg, const char *method)
     return (0);
 }
 
+/**
+ * Synopsis: event_config_require_features 可让libevent不使用不能提供所有指定特征的后端。  
+ *
+ * Param: cfg
+ * Param: features
+ *
+ * Return: 
+ */
 int
 event_config_require_features(struct event_config *cfg,
     int features)
